@@ -29,17 +29,20 @@ async def on_guild_join(guild):
 
 
 @client.command()
-async def changewelcomechannel(ctx, arg):
+async def welcomeChannel(ctx, arg):
     with open("data.json", "r") as f:
         guildInfo = json.load(f)
 
-    guildInfo[str(ctx.message.guild.id)] = ctx.message.channel.id
+    if ctx.message.author.server_permissions.administrator:
 
-    with open("data.json", "w") as f:
-        json.dump(guildInfo, f)
+        guildInfo[str(ctx.message.guild.id)] = discord.utils.get(
+            ctx.guild.channels, name=arg).id
 
-    await ctx.message.channel.send(
-        f"Welcome Channel has been changed to `{arg}`")
+        with open("data.json", "w") as f:
+            json.dump(guildInfo, f)
+
+        await ctx.message.channel.send(
+            f"Welcome Channel has been changed to `{arg}`")
 
 
 @client.event
