@@ -36,6 +36,19 @@ async def on_guild_join(guild):
         json.dump(guild_info, f)
 
 
+@client.event
+async def on_guild_remove(guild):
+    guild = str(guild.id)
+
+    with open('data.json', 'r') as f:
+        data = json.load(f)
+
+    del data[guild]
+
+    with open('data.json', 'w') as f:
+        json.dump(data, f)
+
+
 @client.command()
 async def welcomeChannel(ctx, arg):
 
@@ -90,9 +103,10 @@ async def byeChannel(ctx, arg):
 
 @client.event
 async def on_member_remove(member):
-    guildInfo = load_data_json()
+    if member.id != client.user.id:
+        guildInfo = load_data_json()
 
-    channel_id = guildInfo[str(member.guild.id)]['bye']
-    await client.get_channel(channel_id).send(f'{member.name} just left the server.')
+        channel_id = guildInfo[str(member.guild.id)]['bye']
+        await client.get_channel(channel_id).send(f'{member.name} just left the server.')
 
 client.run(config('TOKEN'))
