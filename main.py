@@ -156,8 +156,7 @@ async def userLeaveChannel(ctx, arg):
 
 @client.command()
 async def avatar(ctx, member: discord.User = None):
-    id = member.id
-    avatar = client.get_user(id).avatar_url
+    avatar = member.avatar_url
     await ctx.send(avatar)
 
 
@@ -179,6 +178,28 @@ async def unlock(ctx, channel: discord.TextChannel = None):
     overwrite.send_messages = True
     await channel.set_permissions(ctx.guild.default_role, overwrite=overwrite)
     await ctx.send('Channel Unlocked.')
+
+
+@client.command()
+@commands.has_permissions(ban_members=True)
+async def ban(ctx, member: discord.Member, reason="No Reason was provided"):
+    await ctx.send(f'{member.name} has been banned from the server')
+    await member.ban(reason=reason)
+
+
+@client.command()
+@commands.has_permissions(ban_members=True)
+async def unban(ctx, member):
+    banned_users = await ctx.guild.bans()
+    member_name, member_disc = member.split("#")
+
+    for banned_entry in banned_users:
+        user = banned_entry.user
+
+        if (user.name, user.discriminator) == (member_name, member_disc):
+            await ctx.guild.unban(user)
+            await ctx.send(f'{user.name} has been unbanned!')
+            return
 
 
 @client.command()
