@@ -1,10 +1,11 @@
 import discord
 from discord.ext import commands
 from decouple import config
-from utilities import load_json, str_to_bool
+from utilities import read_database
 import json
 import random
 import os
+import sqlite3
 
 
 intents = discord.Intents.default()
@@ -23,50 +24,31 @@ async def on_ready():
 
 @client.event
 async def on_guild_join(guild):
-    if not os.path.isfile('config/data.json'):
-        with open('config/data.json', 'w') as f:
-            f.write('{}')
+    guildData = {"GuildId": guild.id, "welcomeChannel": guild.text_channels[0].id, "userLeaveChannel": guild.text_channels[0].id, "welcomeMsg": False, "userLeaveMsg": False}
 
-    guild_info = load_json('config/data.json')
+    # Create DataBase 
+    with sqlite3.connect('db.sqlite3') as db:
+        command = "INSERT INTO Settings VALUES(?, ?, ?, ?, ?)"
+        db.execute(command, tuple(guildData.values()))
+        db.commit()
 
-    guild_info[str(guild.id)] = {
-        'welcome': guild.text_channels[0].id, 'bye': guild.text_channels[0].id}
-    with open("config/data.json", "w") as f:
-        json.dump(guild_info, f)
 
-    if not os.path.isfile('config/settings.json'):
-        with open('config/settings.json', 'w') as f:
-            f.write('{}')
-
-    guildSettings = load_json('config/settings.json')
-    guildSettings[str(guild.id)] = {'welcome': 'False', 'bye': 'False'}
-
-    with open('config/settings.json', 'w') as file:
-        json.dump(guildSettings, file)
 
 
 @client.event
 async def on_guild_remove(guild):
-    guild = str(guild.id)
+    data = read_database(guild.id)[0]
+    with sqlite3.connect("db.sqlite3") as db:
+        command = f"DELETE FROM Settings WHERE GuildId = {guild.id}"
+        db.execute(command)
+        db.commit()
 
-    data = load_json('config/data.json')
-
-    del data[guild]
-
-    with open('config/data.json', 'w') as f:
-        json.dump(data, f)
-
-    settings = load_json('config/settings.json')
-
-    del settings[guild]
-    with open('config/settings.json', 'w') as f:
-        json.dump(data, f)
 
 
 @client.event
 async def on_member_join(member):
-    settings = load_json('config/settings.json')
-    enabled = str_to_bool(settings[str(member.guild.id)]['welcome'])
+    settings = read_database(member.guild.id)
+    enabled = bool(settings[3])
     if enabled:
         colour = discord.Color
         colours = [colour.teal(), colour.green(),
@@ -75,23 +57,18 @@ async def on_member_join(member):
         embed = discord.Embed(colour=random.choice(colours))
         embed.set_image(url=member.avatar_url)
 
-        guildInfo = load_json('config/data.json')
-
-        channel_id = guildInfo[str(member.guild.id)]['welcome']
+        channel_id = settings[1]
 
         await client.get_channel(channel_id).send(f'Hey {member.mention}, Welcome to {member.guild.name}', embed=embed)
 
 
 @client.event
 async def on_member_remove(member):
-    settings = load_json('config/settings.json')
-    enabled = str_to_bool(settings[str(member.guild.id)]['bye'])
+    settings = read_database(member.guild.id)
+    enabled = bool(settings[4])
     if enabled:
-        if member.id != client.user.id:
-            guildInfo = load_json('config/data.json')
-
-            channel_id = guildInfo[str(member.guild.id)]['bye']
-            await client.get_channel(channel_id).send(f'{member.name} just left the server.')
+        channel_id = settings[2]
+        await client.get_channel(channel_id).send(f'{member.name} just left the server.')
 
 
 

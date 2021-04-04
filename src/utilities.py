@@ -1,20 +1,19 @@
-import json
+import sqlite3
 from discord.ext import commands
-def load_json(file):
-    with open(file, 'r') as f:
-        guildInfo = json.load(f)
 
-    return guildInfo
+def read_database(guildId):
+    with sqlite3.connect('db.sqlite3') as db:
+        command = f"SELECT * FROM Settings WHERE GuildId = '{guildId}'"
+        data = db.execute(command)
+        data = data.fetchall()
 
+    return data[0]
 
-def str_to_bool(string):
-    result = ''
-    if string == 'True':
-        result = True
-    elif string == 'False':
-        result = False
-
-    return result
+def update_settings(setting, value, guildId):
+    with sqlite3.connect("db.sqlite3") as db:
+        command = f"UPDATE Settings SET {setting} = {value} WHERE GuildId = {guildId}" 
+        db.execute(command)
+        db.commit()      
 
 
 def has_admin_permissions():

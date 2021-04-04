@@ -1,3 +1,5 @@
 .env
 .vscode/
 config/
+db.sqlite3
+src/__pycache__
