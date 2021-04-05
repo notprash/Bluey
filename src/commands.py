@@ -29,13 +29,10 @@ class Commands(commands.Cog):
             f"{msg_type} Channel has been changed to `{arg}`")
 
 
-
     @commands.command()
     @has_admin_permissions()
     async def welcomeChannel(self, ctx, arg):
         await self.change_channel(ctx, arg, "welcomeChannel", "Welcome")
-
-
 
     @commands.command()
     @has_admin_permissions()
@@ -68,7 +65,6 @@ class Commands(commands.Cog):
         await channel.set_permissions(ctx.guild.default_role, overwrite=overwrite)
         await ctx.send('Channel locked.')
 
-
     @commands.command()
     @has_admin_permissions()
     async def unlock(self, ctx, channel: discord.TextChannel = None):
@@ -77,7 +73,6 @@ class Commands(commands.Cog):
         overwrite.send_messages = True
         await channel.set_permissions(ctx.guild.default_role, overwrite=overwrite)
         await ctx.send('Channel Unlocked.')
-
 
     @commands.command()
     @commands.has_permissions(ban_members=True)
@@ -100,10 +95,6 @@ class Commands(commands.Cog):
                 await ctx.guild.unban(user)
                 await ctx.send(f"Unbanned {user.name}#{user.discriminator} from the server")
                 return
-            
-
-        
-        
 
 def setup(bot):
     bot.add_cog(Commands(bot))
