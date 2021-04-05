@@ -9,9 +9,13 @@ class Commands(commands.Cog):
 
     async def toggle_msgs(self, ctx, arg, field_name, msg_type):
         settings = read_database(ctx.guild.id)
+
+        # Enable welcome/userLeave msg
         if arg.lower() == 'enable':
             update_settings(field_name, True, ctx.guild.id)
             await ctx.message.channel.send(f'{msg_type} Message is enabled')
+
+        # Disables welcome/userLeave msg
         elif arg.lower() == 'disable':
             update_settings(field_name, False, ctx.guild.id)
             await ctx.message.channel.send(f'{msg_type} Message is disabled')
@@ -20,6 +24,8 @@ class Commands(commands.Cog):
 
     async def change_channel(self, ctx, arg, field_name, msg_type):
         settings = read_database(ctx.guild.id)
+
+        # Gettings ChannelId by name
         channelId = discord.utils.get(
                 ctx.guild.channels, name=arg).id
 
@@ -60,18 +66,25 @@ class Commands(commands.Cog):
     @commands.has_permissions(manage_channels=True)
     async def lock(self, ctx, channel: discord.TextChannel = None):
         channel = channel or ctx.channel
+
+        # Overwrites user permissions
         overwrite = channel.overwrites_for(ctx.guild.default_role)
         overwrite.send_messages = False
         await channel.set_permissions(ctx.guild.default_role, overwrite=overwrite)
+
+
         await ctx.send('Channel locked.')
 
     @commands.command()
     @has_admin_permissions()
     async def unlock(self, ctx, channel: discord.TextChannel = None):
         channel = channel or ctx.channel
+
+        # Overwrites user permssions
         overwrite = channel.overwrites_for(ctx.guild.default_role)
         overwrite.send_messages = True
         await channel.set_permissions(ctx.guild.default_role, overwrite=overwrite)
+
         await ctx.send('Channel Unlocked.')
 
     @commands.command()
@@ -85,16 +98,21 @@ class Commands(commands.Cog):
     @commands.has_permissions(ban_members=True)
     async def unban(self, ctx, member, reason="No Reason was provided"):
         banned_users = await ctx.guild.bans()
+
+        # Splits member_name, member_disc ie Prash#4945 = (Prash, 4945)
         member_name, member_disc = member.split("#")
 
         for banned_entry in banned_users:
             user = banned_entry.user
 
 
+            # Find user to unban
             if (user.name, user.discriminator) == (member_name, member_disc):
                 await ctx.guild.unban(user)
                 await ctx.send(f"Unbanned {user.name}#{user.discriminator} from the server")
                 return
 
+
+# Add bot as an extension
 def setup(bot):
     bot.add_cog(Commands(bot))

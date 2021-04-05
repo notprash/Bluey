@@ -3,7 +3,9 @@ from discord.ext import commands
 
 def read_database(guildId):
     with sqlite3.connect('db.sqlite3') as db:
+        # Fetching Data
         command = f"SELECT * FROM Settings WHERE GuildId = '{guildId}'"
+
         data = db.execute(command)
         data = data.fetchall()
 
