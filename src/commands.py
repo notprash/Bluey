@@ -1,7 +1,7 @@
 from discord.ext import commands
 import discord
-import sqlite3
 from utilities import read_database, has_admin_permissions, update_settings
+
 
 class Commands(commands.Cog):
     def __init__(self, bot):
@@ -27,13 +27,12 @@ class Commands(commands.Cog):
 
         # Gettings ChannelId by name
         channelId = discord.utils.get(
-                ctx.guild.channels, name=arg).id
+            ctx.guild.channels, name=arg).id
 
         update_settings(f"{field_name}", channelId, ctx.guild.id)
 
         await ctx.message.channel.send(
             f"{msg_type} Channel has been changed to `{arg}`")
-
 
     @commands.command()
     @has_admin_permissions()
@@ -43,7 +42,7 @@ class Commands(commands.Cog):
     @commands.command()
     @has_admin_permissions()
     async def welcomeMsg(self, ctx, arg):
-        await self.toggle_msgs(ctx, arg, "welcomeMsg", "Welcome")   
+        await self.toggle_msgs(ctx, arg, "welcomeMsg", "Welcome")
 
     @commands.command()
     @has_admin_permissions()
@@ -55,12 +54,20 @@ class Commands(commands.Cog):
     async def userLeaveMsg(self, ctx, arg):
         await self.toggle_msgs(ctx, arg, "userLeaveMsg", "UserLeave")
 
-
     @commands.command()
     async def avatar(self, ctx, member: discord.User = None):
-        avatar = member.avatar_url
-        await ctx.send(avatar)
+        if member == None:
+            avatar = ctx.message.author.avatar_url
+            user_name = ctx.message.author
+        else:
+            avatar = member.avatar_url
+            user_name = member
 
+        embed = discord.Embed(description=f"Requested by {ctx.message.author}")
+        embed.set_author(name=f"{user_name}'s Avatar", icon_url=avatar)
+        embed.set_image(url=avatar)
+
+        await ctx.send(embed=embed)
 
     @commands.command()
     @commands.has_permissions(manage_channels=True)
@@ -71,7 +78,6 @@ class Commands(commands.Cog):
         overwrite = channel.overwrites_for(ctx.guild.default_role)
         overwrite.send_messages = False
         await channel.set_permissions(ctx.guild.default_role, overwrite=overwrite)
-
 
         await ctx.send('Channel locked.')
 
@@ -93,7 +99,6 @@ class Commands(commands.Cog):
         await ctx.send(f'{member.name} has been banned from the server')
         await member.ban(reason=reason)
 
-
     @commands.command()
     @commands.has_permissions(ban_members=True)
     async def unban(self, ctx, member, reason="No Reason was provided"):
@@ -105,12 +110,34 @@ class Commands(commands.Cog):
         for banned_entry in banned_users:
             user = banned_entry.user
 
-
             # Find user to unban
             if (user.name, user.discriminator) == (member_name, member_disc):
                 await ctx.guild.unban(user)
                 await ctx.send(f"Unbanned {user.name}#{user.discriminator} from the server")
                 return
+
+    @commands.command()
+    async def stats(self, ctx):
+        # Settings Embed Color
+        color = discord.Color.blue()
+        embed = discord.Embed(color=color)
+        embed.set_author(name=f"{ctx.guild.name}'s stats",
+                         icon_url=ctx.guild.icon_url)
+
+        # Discord Server ID
+        embed.add_field(name="ID", value=f"`{ctx.guild.id}`", inline=False)
+
+        # Get Total Member Count
+        member_count = len(
+            [member for member in ctx.guild.members if not member.bot])
+        embed.add_field(name="Total Members", value=f"`{member_count}`")
+
+        embed.add_field(name="Total Roles", value=f"`{len(ctx.guild.roles)}`")
+
+        embed.add_field(
+            name="Owner", value=ctx.guild.owner.mention, inline=False)
+
+        await ctx.send(embed=embed)
 
 
 # Add bot as an extension

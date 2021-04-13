@@ -2,15 +2,19 @@ import discord
 from discord.ext import commands
 from decouple import config
 from utilities import read_database
-import random
-import os
+from PIL import Image, ImageDraw, ImageOps, ImageFont
 import sqlite3
+import os
 
 
 intents = discord.Intents.default()
 intents.members = True
 
 client = commands.Bot(command_prefix='*', intents=intents)
+
+
+track_msg = {}
+
 
 @client.event
 async def on_ready():
@@ -22,16 +26,15 @@ async def on_ready():
 
 @client.event
 async def on_guild_join(guild):
-    # Creates Basic Data Structure 
-    guildData = {"GuildId": guild.id, "welcomeChannel": guild.text_channels[0].id, "userLeaveChannel": guild.text_channels[0].id, "welcomeMsg": False, "userLeaveMsg": False}
+    # Creates Basic Data Structure
+    guildData = {"GuildId": guild.id, "welcomeChannel": guild.text_channels[0].id,
+                 "userLeaveChannel": guild.text_channels[0].id, "welcomeMsg": False, "userLeaveMsg": False}
 
-    # Create DataBase 
+    # Create DataBase
     with sqlite3.connect('db.sqlite3') as db:
         command = "INSERT INTO Settings VALUES(?, ?, ?, ?, ?)"
         db.execute(command, tuple(guildData.values()))
         db.commit()
-
-
 
 
 @client.event
@@ -52,20 +55,46 @@ async def on_member_join(member):
     # Checks if welcome msg is enabled
     enabled = bool(settings[3])
 
-
     if enabled:
-        colour = discord.Color
-        colours = [colour.teal(), colour.green(),
-                   colour.orange(), colour.blue()]
 
-        embed = discord.Embed(colour=random.choice(colours))
-        embed.set_image(url=member.avatar_url)
+        await member.avatar_url.save("avatar.png")
+
+        # Create the circular image
+        img = Image.open('avatar.png')
+
+        size = (256, 256)
+        mask = Image.new('L', size, 0)
+        draw = ImageDraw.Draw(mask)
+        draw.ellipse((0, 0) + size, fill=255)
+
+        circle = ImageOps.fit(img, mask.size, centering=(0.5, 0.5))
+        circle.putalpha(mask)
+
+        # Create Background
+        background = Image.new("RGB", (700, 400), (0, 0, 0))
+
+        # Paste the circular image on the background
+        background.paste(circle, (220, 0), circle)
+
+        # Add Text to Image
+        font = ImageFont.truetype('Roboto-Regular.ttf', 30)
+        draw = ImageDraw.Draw(background)
+        draw.text((120, 300), f"{member.name}#{member.discriminator} just joined the server",
+                  (128, 128, 128), font=font)
+        background.save('foo.png')
 
         # Gets welcome msg channel
         channel_id = settings[1]
 
+        # Get Welcome Card
+        welcome_card = discord.File('foo.png')
+
         # Sends welcome msg
-        await client.get_channel(channel_id).send(f'Hey {member.mention}, Welcome to {member.guild.name}', embed=embed)
+        await client.get_channel(channel_id).send(file=welcome_card)
+
+        # Remvoe the files
+        os.remove('foo.png')
+        os.remove('avatar.png')
 
 
 @client.event
@@ -78,7 +107,6 @@ async def on_member_remove(member):
 
         # Sends user leave msg
         await client.get_channel(channel_id).send(f'{member.name} just left the server.')
-
 
 
 client.load_extension('commands')
