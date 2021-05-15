@@ -26,6 +26,12 @@ async def on_ready():
 
 @client.event
 async def on_guild_join(guild):
+    # Create table and field
+    with sqlite3.connect('db.sqlite3') as db:
+        command = "CREATE TABLE Settings (GuildId int, welcomeChannel int, userLeaveChannel int, welcomeMsg int, userLeavemsg int)"
+        db.execute(command)
+        db.commit()
+
     # Creates Basic Data Structure
     guildData = {"GuildId": guild.id, "welcomeChannel": guild.text_channels[0].id,
                  "userLeaveChannel": guild.text_channels[0].id, "welcomeMsg": False, "userLeaveMsg": False}
@@ -41,9 +47,9 @@ async def on_guild_join(guild):
 async def on_guild_remove(guild):
     data = read_database(guild.id)[0]
 
-    # Deletes server data from the bot when the bot removed from the server
-    with sqlite3.connect("db.sqlite3") as db:
-        command = f"DELETE FROM Settings WHERE GuildId = {guild.id}"
+    # Deletes server data from the bot when the bot removed from the server 
+    with sqlite3.connect("db.sqlite3") as db: 
+        command = f"DELETE FROM Settings WHERE GuildId = {guild.id}" 
         db.execute(command)
         db.commit()
 
