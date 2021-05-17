@@ -3,17 +3,41 @@ from discord.ext import commands
 from decouple import config
 from utilities import read_database
 from PIL import Image, ImageDraw, ImageOps, ImageFont
+from discord_slash import SlashCommand
 import sqlite3
 import os
+from emoji import emojize
 
 
-intents = discord.Intents.default()
-intents.members = True
+intents = discord.Intents.all()
 
 client = commands.Bot(command_prefix='*', intents=intents)
+slash = SlashCommand(client, sync_commands=True)
 
 
-track_msg = {}
+@slash.slash(name="poll", description='Creates a poll')
+async def poll(ctx, question, choice_a, choice_b, choice_c="", choice_d="", choice_e="", choice_f="", choice_g=""):
+    embed = discord.Embed(title=question).set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
+    emojis = ["\N{REGIONAL INDICATOR SYMBOL LETTER A}",
+            "\N{REGIONAL INDICATOR SYMBOL LETTER B}",
+            "\N{REGIONAL INDICATOR SYMBOL LETTER C}",
+            "\N{REGIONAL INDICATOR SYMBOL LETTER D}",
+            "\N{REGIONAL INDICATOR SYMBOL LETTER E}", 
+            "\N{REGIONAL INDICATOR SYMBOL LETTER F}",
+            "\N{REGIONAL INDICATOR SYMBOL LETTER G}"]
+
+    choices_list = [choice_a, choice_b, choice_c , choice_d, choice_e, choice_f, choice_g]
+    emoji_count = 0 
+    for i in range(len(choices_list)):
+        if choices_list[i] != "":
+            embed.add_field(name='\u200b', value=f"{emojis[i]} {choices_list[i]}", inline=False)
+            emoji_count += 1
+
+    msg = await ctx.send(embed=embed)
+
+    for emoji in emojis[:emoji_count]:
+        await msg.add_reaction(emoji)
+
 
 
 @client.event
