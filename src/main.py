@@ -17,7 +17,10 @@ slash = SlashCommand(client, sync_commands=True)
 
 @slash.slash(name="poll", description='Creates a poll')
 async def poll(ctx, question, choice_a, choice_b, choice_c="", choice_d="", choice_e="", choice_f="", choice_g=""):
+    # Create Embed
     embed = discord.Embed(title=question).set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
+
+    # Emoji List
     emojis = ["\N{REGIONAL INDICATOR SYMBOL LETTER A}",
             "\N{REGIONAL INDICATOR SYMBOL LETTER B}",
             "\N{REGIONAL INDICATOR SYMBOL LETTER C}",
@@ -35,6 +38,7 @@ async def poll(ctx, question, choice_a, choice_b, choice_c="", choice_d="", choi
 
     msg = await ctx.send(embed=embed)
 
+    # Add Reactions
     for emoji in emojis[:emoji_count]:
         await msg.add_reaction(emoji)
 

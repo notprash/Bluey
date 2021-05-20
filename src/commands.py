@@ -1,6 +1,11 @@
 from discord.ext import commands
 import discord
 from utilities import read_database, has_admin_permissions, update_settings
+import requests
+from PIL import Image
+import face_recognition
+import asyncio
+import os
 
 
 class Commands(commands.Cog):
@@ -33,6 +38,23 @@ class Commands(commands.Cog):
 
         await ctx.message.channel.send(
             f"{msg_type} Channel has been changed to `{arg}`")
+
+    @commands.command()
+    async def countpeople(self, ctx, image_link):
+        # Download Image
+        Image.open(requests.get(image_link, stream=True).raw).save('foo.png')
+
+        img = face_recognition.load_image_file("foo.png")
+        
+        # Find Face locations
+        locations = face_recognition.face_locations(img)
+
+        await ctx.send(f"There are {len(locations)} people in this image")
+
+        # Remove img
+        os.remove('foo.png')
+        
+
 
     @commands.command()
     @has_admin_permissions()
