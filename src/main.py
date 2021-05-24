@@ -15,11 +15,9 @@ client = commands.Bot(command_prefix='*', intents=intents)
 slash = SlashCommand(client, sync_commands=True)
 
 
+
 @slash.slash(name="poll", description='Creates a poll')
 async def poll(ctx, question, choice_a, choice_b, choice_c="", choice_d="", choice_e="", choice_f="", choice_g=""):
-    # Create Embed
-    embed = discord.Embed(title=question).set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
-
     # Emoji List
     emojis = ["\N{REGIONAL INDICATOR SYMBOL LETTER A}",
             "\N{REGIONAL INDICATOR SYMBOL LETTER B}",
@@ -31,16 +29,21 @@ async def poll(ctx, question, choice_a, choice_b, choice_c="", choice_d="", choi
 
     choices_list = [choice_a, choice_b, choice_c , choice_d, choice_e, choice_f, choice_g]
     emoji_count = 0 
+    final_str = ""
     for i in range(len(choices_list)):
         if choices_list[i] != "":
-            embed.add_field(name='\u200b', value=f"{emojis[i]} {choices_list[i]}", inline=False)
+            final_str += f"{emojis[i]} {choices_list[i]}\n"
             emoji_count += 1
+    # Create Embed
+    embed = discord.Embed(description=final_str).set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
 
-    msg = await ctx.send(embed=embed)
+
+    msg = await ctx.send(question, embed=embed)
 
     # Add Reactions
     for emoji in emojis[:emoji_count]:
         await msg.add_reaction(emoji)
+
 
 
 
@@ -124,7 +127,7 @@ async def on_member_join(member):
         welcome_card = discord.File('foo.png')
 
         # Sends welcome msg
-        await client.get_channel(channel_id).send(file=welcome_card)
+        await client.get_channel(channel_id).send(f"Hey {member.mention}, Welcome to the {member.guild.name}", file=welcome_card)
 
         # Remvoe the files
         os.remove('foo.png')

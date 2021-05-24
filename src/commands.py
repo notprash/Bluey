@@ -6,6 +6,9 @@ from PIL import Image
 import face_recognition
 import asyncio
 import os
+from googleapiclient.discovery import build
+from decouple import config
+from num2words import num2words
 
 
 class Commands(commands.Cog):
@@ -54,6 +57,36 @@ class Commands(commands.Cog):
         # Remove img
         os.remove('foo.png')
         
+
+    @commands.command()
+    async def youtubestats(self, ctx, channelId):
+
+        # Get api key
+        api_key = config("APIKEY")
+
+        # Fetch the youtube the api
+        youtube = build('youtube', 'v3', developerKey=api_key) 
+
+        # Get Part statistics 
+        request = youtube.channels().list(part='statistics', id=channelId)
+        request = request.execute()
+
+        # Return if channel does not exist
+        if request['pageInfo']['totalResults'] == 0:
+            await ctx.send("Channel not Found!")
+            return
+
+        # Create Embed
+        stats = request['items'][0]['statistics']
+        fields = '''
+        **SubcriberCount** 🎉 >> {:,d}
+        **View Count** 🔥 >> {}
+        **Video Count** >> {}
+        '''.format(int(stats['subscriberCount']), ' '.join(num2words(stats['viewCount']).split()[:2]).capitalize()[:-1], stats['videoCount'])
+        
+        embed = discord.Embed(description=fields, color=discord.Color.random()).set_author(name=f"Requested by {ctx.author}", icon_url=ctx.author.avatar_url)
+        await ctx.send(embed=embed)
+
 
 
     @commands.command()
