@@ -6,12 +6,11 @@ from PIL import Image, ImageDraw, ImageOps, ImageFont
 from discord_slash import SlashCommand
 import sqlite3
 import os
-from emoji import emojize
 
 
 intents = discord.Intents.all()
 
-client = commands.Bot(command_prefix='*', intents=intents)
+client = commands.Bot(command_prefix='!', intents=intents)
 slash = SlashCommand(client, sync_commands=True)
 
 
@@ -52,7 +51,7 @@ async def on_ready():
     print("Bot is ready")
 
     # Changes Bot Status
-    await client.change_presence(activity=discord.Game(name=" *help"))
+    await client.change_presence(activity=discord.Game(name=" !help"))
 
 
 @client.event
@@ -147,4 +146,5 @@ async def on_member_remove(member):
 
 
 client.load_extension('commands')
+client.load_extension('music')
 client.run(config('TOKEN'))

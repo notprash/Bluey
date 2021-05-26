@@ -4,7 +4,6 @@ from utilities import read_database, has_admin_permissions, update_settings
 import requests
 from PIL import Image
 import face_recognition
-import asyncio
 import os
 from googleapiclient.discovery import build
 from decouple import config
@@ -16,8 +15,6 @@ class Commands(commands.Cog):
         self.client = bot
 
     async def toggle_msgs(self, ctx, arg, field_name, msg_type):
-        settings = read_database(ctx.guild.id)
-
         # Enable welcome/userLeave msg
         if arg.lower() == 'enable':
             update_settings(field_name, True, ctx.guild.id)
