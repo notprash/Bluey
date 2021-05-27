@@ -31,10 +31,8 @@ class Commands(commands.Cog):
         settings = read_database(ctx.guild.id)
 
         # Gettings ChannelId by name
-        channelId = discord.utils.get(
-            ctx.guild.channels, name=arg).id
 
-        update_settings(f"{field_name}", channelId, ctx.guild.id)
+        update_settings(f"{field_name}", arg.id, ctx.guild.id)
 
         await ctx.message.channel.send(
             f"{msg_type} Channel has been changed to `{arg}`")
@@ -88,7 +86,7 @@ class Commands(commands.Cog):
 
     @commands.command()
     @has_admin_permissions()
-    async def welcomeChannel(self, ctx, arg):
+    async def welcomeChannel(self, ctx, arg: discord.TextChannel):
         await self.change_channel(ctx, arg, "welcomeChannel", "Welcome")
 
     @commands.command()
@@ -98,7 +96,7 @@ class Commands(commands.Cog):
 
     @commands.command()
     @has_admin_permissions()
-    async def userLeaveChannel(self, ctx, arg):
+    async def userLeaveChannel(self, ctx, arg: discord.TextChannel):
         await self.change_channel(ctx, arg, "userLeaveChannel", "User Leave")
 
     @commands.command()

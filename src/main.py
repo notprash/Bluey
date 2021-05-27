@@ -56,11 +56,16 @@ async def on_ready():
 
 @client.event
 async def on_guild_join(guild):
+
     # Create table and field
     with sqlite3.connect('db.sqlite3') as db:
         command = "CREATE TABLE Settings (GuildId int, welcomeChannel int, userLeaveChannel int, welcomeMsg int, userLeavemsg int)"
-        db.execute(command)
-        db.commit()
+        try:
+            db.execute(command)
+            db.commit()
+        except Exception:
+            print("Table Exists")
+        
 
     # Creates Basic Data Structure
     guildData = {"GuildId": guild.id, "welcomeChannel": guild.text_channels[0].id,
