@@ -124,28 +124,6 @@ class Commands(commands.Cog):
 
         await ctx.send('Channel Unlocked.')
 
-    @commands.command()
-    @commands.has_permissions(ban_members=True)
-    async def ban(self, ctx, member: discord.Member, reason="No Reason was provided"):
-        await ctx.send(f'{member.name} has been banned from the server')
-        await member.ban(reason=reason)
-
-    @commands.command()
-    @commands.has_permissions(ban_members=True)
-    async def unban(self, ctx, member, reason="No Reason was provided"):
-        banned_users = await ctx.guild.bans()
-
-        # Splits member_name, member_disc ie Prash#4945 = (Prash, 4945)
-        member_name, member_disc = member.split("#")
-
-        for banned_entry in banned_users:
-            user = banned_entry.user
-
-            # Find user to unban
-            if (user.name, user.discriminator) == (member_name, member_disc):
-                await ctx.guild.unban(user)
-                await ctx.send(f"Unbanned {user.name}#{user.discriminator} from the server")
-                return
 
     @commands.command()
     async def stats(self, ctx):
