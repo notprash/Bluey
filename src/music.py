@@ -10,6 +10,7 @@ class Music(commands.Cog):
         self.is_playing = False
         self.FFMPEG_OPTIONS = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'}
         self.vc = ""
+        self.current_song = None
 
 
     def search_song(self, song_name):
@@ -18,6 +19,8 @@ class Music(commands.Cog):
                 info = ydl.extract_info("ytsearch:%s" % song_name, download=False)['entries'][0]
             except Exception: 
                 return False
+
+        print(info)
 
         return {'source': info['formats'][0]['url'], 'title': info['title']}
         
@@ -37,7 +40,8 @@ class Music(commands.Cog):
             
             print(self.music_queue)
             #remove the first element as you are currently playing it
-            self.music_queue.pop(0)
+            self.current_song = self.music_queue.pop(0)
+            self.current_song = self.current_song[0]['title']
 
             self.vc.play(discord.FFmpegPCMAudio(m_url, **self.FFMPEG_OPTIONS), after=lambda e: self.play_next())
         else:
@@ -71,17 +75,14 @@ class Music(commands.Cog):
             voice_channel = None
         if voice_channel is None:
             #you need to be connected so that the bot knows where to go
-            await ctx.send("Connect to a voice channel!")
+            await ctx.send("🚫 Connect to a voice channel!")
         else:
             song = self.search_song(query)
-            if type(song) == type(True):
-                await ctx.send("Could not download the song. Incorrect format try another keyword. This could be due to playlist or a livestream format.")
-            else:
-                await ctx.send(f"Added **{song['title']}** to the queue")
-                self.music_queue.append([song, voice_channel])
+            await ctx.send(f"🎵 **{song['title']}** added to **PandaQueue**")
+            self.music_queue.append([song, voice_channel, ctx.author])
                 
-                if self.is_playing == False:
-                    await self.play_music()
+            if self.is_playing == False:
+                await self.play_music()
 
 
     @commands.command()
@@ -104,10 +105,10 @@ class Music(commands.Cog):
         str = ""
         for song in self.music_queue:
             print(self.music_queue)
-            song_name = f"**{song[0]['title']}**\n"
+            song_name = f"🎵 **{song[0]['title']} - {song[2].mention}**\n"
             str += song_name
-        embed = discord.Embed(title="Queue", description=str)
-        await ctx.send(embed=embed)
+        embed = discord.Embed(title=f"Panda Queue | {len(self.music_queue)} songs left", description=str, color=ctx.author.color)
+        await ctx.send(f"**{self.current_song}**", embed=embed)
 
 
 

@@ -6,6 +6,7 @@ from PIL import Image, ImageDraw, ImageOps, ImageFont
 from discord_slash import SlashCommand
 import sqlite3
 import os
+import pywal
 
 
 intents = discord.Intents.all()
@@ -34,10 +35,10 @@ async def poll(ctx, question, choice_a, choice_b, choice_c="", choice_d="", choi
             final_str += f"{emojis[i]} {choices_list[i]}\n"
             emoji_count += 1
     # Create Embed
-    embed = discord.Embed(description=final_str).set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
+    embed = discord.Embed(description=final_str, color=ctx.author.color).set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
 
 
-    msg = await ctx.send(question, embed=embed)
+    msg = await ctx.send(f"**{question}**", embed=embed)
 
     # Add Reactions
     for emoji in emojis[:emoji_count]:
@@ -51,7 +52,7 @@ async def on_ready():
     print("Bot is ready")
 
     # Changes Bot Status
-    await client.change_presence(activity=discord.Game(name=" !help"))
+    await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=" Ku Fu Panda"))
 
 
 @client.event
@@ -88,6 +89,26 @@ async def on_guild_remove(guild):
         db.execute(command)
         db.commit()
 
+def get_colors(image_file, numcolors=10, resize=150):
+    # Resize image to speed up processing
+    img = Image.open(image_file)
+    img = img.copy()
+    img.thumbnail((resize, resize))
+
+    # Reduce to palette
+    paletted = img.convert('P', palette=Image.ADAPTIVE, colors=numcolors)
+
+    # Find dominant colors
+    palette = paletted.getpalette()
+    color_counts = sorted(paletted.getcolors(), reverse=True)
+    colors = list()
+    for i in range(numcolors):
+        palette_index = color_counts[i][1]
+        dominant_color = palette[palette_index*3:palette_index*3+3]
+        colors.append(tuple(dominant_color))
+
+    return colors
+
 
 @client.event
 async def on_member_join(member):
@@ -100,28 +121,32 @@ async def on_member_join(member):
 
         await member.avatar_url.save("avatar.png")
 
-        # Create the circular image
-        img = Image.open('avatar.png')
-
+        # Create Circular Image
         size = (256, 256)
         mask = Image.new('L', size, 0)
-        draw = ImageDraw.Draw(mask)
+        draw = ImageDraw.Draw(mask) 
         draw.ellipse((0, 0) + size, fill=255)
 
-        circle = ImageOps.fit(img, mask.size, centering=(0.5, 0.5))
-        circle.putalpha(mask)
+        im = Image.open('avatar.png').convert("RGBA")
+        colors = get_colors('avatar.png')
 
-        # Create Background
-        background = Image.new("RGB", (700, 400), (0, 0, 0))
+        output = ImageOps.fit(im, mask.size, centering=(0.5, 0.5))
+        output.putalpha(mask)
+        output.save('output.png')
 
-        # Paste the circular image on the background
-        background.paste(circle, (220, 0), circle)
+        im = Image.open("output.png").convert("RGBA")
+        background = Image.new("RGBA", (700, 400), (0, 0, 0))
+        half = Image.new("RGBA", (700, 150) , colors[2])
 
-        # Add Text to Image
+        # Paste Images
+        background.paste(half, (0, 0))
+        background.paste(im, (230, 40), im)
+
+        # Add Text
         font = ImageFont.truetype('Roboto-Regular.ttf', 30)
         draw = ImageDraw.Draw(background)
-        draw.text((120, 300), f"{member.name}#{member.discriminator} just joined the server",
-                  (128, 128, 128), font=font)
+        draw.text((150, 320), f"{member.name}#{member.discriminator} just joined the server",
+                  (255, 255, 255), font=font)
         background.save('foo.png')
 
         # Gets welcome msg channel
@@ -133,9 +158,15 @@ async def on_member_join(member):
         # Sends welcome msg
         await client.get_channel(channel_id).send(f"Hey {member.mention}, Welcome to the {member.guild.name}", file=welcome_card)
 
-        # Remvoe the files
+        # Remove the files
         os.remove('foo.png')
-        os.remove('avatar.png')
+        os.remove('output.png')
+        os.remove('avatar.png')        
+
+
+
+
+
 
 
 @client.event
