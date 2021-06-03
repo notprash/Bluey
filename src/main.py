@@ -60,7 +60,7 @@ async def on_guild_join(guild):
 
     # Create table and field
     with sqlite3.connect('db.sqlite3') as db:
-        command = "CREATE TABLE Settings (GuildId int, welcomeChannel int, userLeaveChannel int, welcomeMsg int, userLeavemsg int)"
+        command = "CREATE TABLE Settings (GuildId int, welcomeChannel int, userLeaveChannel int, welcomeMsg int, userLeavemsg int, warncount int)"
         try:
             db.execute(command)
             db.commit()
@@ -70,11 +70,11 @@ async def on_guild_join(guild):
 
     # Creates Basic Data Structure
     guildData = {"GuildId": guild.id, "welcomeChannel": guild.text_channels[0].id,
-                 "userLeaveChannel": guild.text_channels[0].id, "welcomeMsg": False, "userLeaveMsg": False}
+            "userLeaveChannel": guild.text_channels[0].id, "welcomeMsg": False, "userLeaveMsg": False, "warncount": 3}
 
     # Create DataBase
     with sqlite3.connect('db.sqlite3') as db:
-        command = "INSERT INTO Settings VALUES(?, ?, ?, ?, ?)"
+        command = "INSERT INTO Settings VALUES(?, ?, ?, ?, ?, ?)"
         db.execute(command, tuple(guildData.values()))
         db.commit()
 
