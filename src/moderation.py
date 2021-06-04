@@ -21,7 +21,7 @@ class Moderation(commands.Cog):
         role = await server.create_role(name="Muted")
 
         for channel in server.channels:
-            await channel.set_permissions(role, send_messages=False)
+            await channel.set_permissions(role, send_messages=False, add_reactions=False, speak=False)
 
         await member.add_roles(role)
         await ctx.send(f"{member} has been muted from the text 🤐")
@@ -79,17 +79,25 @@ class Moderation(commands.Cog):
             command = f"SELECT count FROM Warnings WHERE Name = '{username}' AND guildId = {ctx.guild.id}"
             result = db.execute(command)
             count = result.fetchall()
+            command = f"SELECT warncount FROM Settings WHERE GuildId = {ctx.guild.id}"
+            execute = db.execute(command)
+            warncount = execute.fetchall()[0][0]
             if len(count) == 0:
                 command = "INSERT INTO Warnings (Name, count, guildId) VALUES(?, ?, ?)"
                 values = {"Name": f"{username}", "count": 1, "guildId": ctx.guild.id}
                 db.execute(command, tuple(values.values()))
                 db.commit()
+                if warncount == 1:
+                    command = "DELETE FROM Warnings WHERE Name = '{username}'"
+                    db.execute(command)
+                    await member.ban(reason=reason)
+                    embed = discord.Embed(title=f"{username} has banned from the server")
+                    embed.set_footer(text="Crossed the warn limit", icon_url=member.avatar_url)
+                    embed.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
+                    await ctx.send(embed=embed)
+                    return
             else:
                 count = count[0][0]
-                # Get WarnCount
-                command = f"SELECT warncount FROM Settings WHERE GuildId = {ctx.guild.id}"
-                execute = db.execute(command)
-                warncount = execute.fetchall()[0][0]
 
                 if warncount == count + 1:
                     command = "DELETE FROM Warnings WHERE Name = '{username}'"
@@ -99,6 +107,7 @@ class Moderation(commands.Cog):
                     embed.set_footer(text="Crossed the warn limit", icon_url=member.avatar_url)
                     embed.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
                     await ctx.send(embed=embed)
+                    return
                 else:
 
                     command = f"UPDATE Warnings set count = {count + 1} WHERE Name = '{username}'"
