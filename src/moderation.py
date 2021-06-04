@@ -108,5 +108,17 @@ class Moderation(commands.Cog):
 
 
         await ctx.send(f"{member} has been warned")
+
+    
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def warncount(self, ctx, count):
+        with sqlite3.connect("db.sqlite3") as db:
+            command = f"UPDATE Settings set warncount = {int(count)} WHERE guildId = {ctx.guild.id}"
+            db.execute(command)
+            db.commit()
+
+        await ctx.send(f"⚠️ Warn Count changed to {count}")
+
 def setup(bot):
     bot.add_cog(Moderation(bot))
