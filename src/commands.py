@@ -1,6 +1,6 @@
 from discord.ext import commands
 import discord
-from utilities import read_database, has_admin_permissions, update_settings
+from utilities import read_database, has_admin_permissions, update_database
 from googleapiclient.discovery import build
 from decouple import config
 from num2words import num2words
@@ -13,22 +13,20 @@ class Commands(commands.Cog):
     async def toggle_msgs(self, ctx, arg, field_name, msg_type):
         # Enable welcome/userLeave msg
         if arg.lower() == 'enable':
-            update_settings(field_name, True, ctx.guild.id)
+            update_database('Settings', field_name, True, 'GuildId', ctx.guild.id)
             await ctx.message.channel.send(f'{msg_type} Message is enabled')
 
         # Disables welcome/userLeave msg
         elif arg.lower() == 'disable':
-            update_settings(field_name, False, ctx.guild.id)
+            update_database('Settings', field_name, False, 'GuildId', ctx.guild.id)
             await ctx.message.channel.send(f'{msg_type} Message is disabled')
         else:
             await ctx.message.channel.send("Could not understand that")
 
     async def change_channel(self, ctx, arg, field_name, msg_type):
-        settings = read_database(ctx.guild.id)
-
         # Gettings ChannelId by name
 
-        update_settings(f"{field_name}", arg.id, ctx.guild.id)
+        update_database('Settings', f"{field_name}", arg.id, 'GuildId', ctx.guild.id)
 
         await ctx.message.channel.send(
             f"{msg_type} Channel has been changed to `{arg}`")

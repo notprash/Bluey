@@ -11,9 +11,9 @@ def read_database(guildId):
 
     return data[0]
 
-def update_settings(setting, value, guildId):
+def update_database(database, setting, value, condition_parameter, condition_value):
     with sqlite3.connect("db.sqlite3") as db:
-        command = f"UPDATE Settings SET {setting} = {value} WHERE GuildId = {guildId}" 
+        command = f"UPDATE {database} SET {setting} = {value} WHERE {condition_parameter} = {condition_value}" 
         db.execute(command)
         db.commit()      
 

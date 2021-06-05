@@ -1,6 +1,7 @@
 from discord.ext import commands
 import discord
 import sqlite3
+from utilities import update_database
 
 
 class Moderation(commands.Cog):
@@ -122,10 +123,8 @@ class Moderation(commands.Cog):
     @commands.command()
     @commands.has_permissions(administrator=True)
     async def warncount(self, ctx, count):
-        with sqlite3.connect("db.sqlite3") as db:
-            command = f"UPDATE Settings set warncount = {int(count)} WHERE guildId = {ctx.guild.id}"
-            db.execute(command)
-            db.commit()
+        
+        update_database("Settings", 'warncount', int(count), 'GuildId', ctx.guild.id)
 
         await ctx.send(f"⚠️ Warn Count changed to {count}")
 
