@@ -70,26 +70,27 @@ class Moderation(commands.Cog):
     async def warn(self, ctx, member: discord.Member, reason="No reason"):
         with sqlite3.connect("db.sqlite3") as db:
             try: 
-                command = "CREATE TABLE Warnings (Name TEXT, count int, guildId int)"
+                command = "CREATE TABLE Warnings (userid int, count int, guildId int)"
                 db.execute(command)
                 db.commit()
             except Exception:
                 print("Table Exists")
 
+            userid = member.id
             username = f"{member.name}#{member.discriminator}"
-            command = f"SELECT count FROM Warnings WHERE Name = '{username}' AND guildId = {ctx.guild.id}"
+            command = f"SELECT count FROM Warnings WHERE userid = {userid} AND guildId = {ctx.guild.id}"
             result = db.execute(command)
             count = result.fetchall()
             command = f"SELECT warncount FROM Settings WHERE GuildId = {ctx.guild.id}"
             execute = db.execute(command)
             warncount = execute.fetchall()[0][0]
             if len(count) == 0:
-                command = "INSERT INTO Warnings (Name, count, guildId) VALUES(?, ?, ?)"
-                values = {"Name": f"{username}", "count": 1, "guildId": ctx.guild.id}
+                command = "INSERT INTO Warnings (userid, count, guildId) VALUES(?, ?, ?)"
+                values = {"userid": userid, "count": 1, "guildId": ctx.guild.id}
                 db.execute(command, tuple(values.values()))
                 db.commit()
                 if warncount == 1:
-                    command = "DELETE FROM Warnings WHERE Name = '{username}'"
+                    command = f"DELETE FROM Warnings WHERE userid = {userid}"
                     db.execute(command)
                     await member.ban(reason=reason)
                     embed = discord.Embed(title=f"{username} has banned from the server")
@@ -101,7 +102,7 @@ class Moderation(commands.Cog):
                 count = count[0][0]
 
                 if warncount == count + 1:
-                    command = "DELETE FROM Warnings WHERE Name = '{username}'"
+                    command = f"DELETE FROM Warnings WHERE userid = {userid}"
                     db.execute(command)
                     await member.ban(reason=reason)
                     embed = discord.Embed(title=f"{username} has banned from the server")
@@ -111,8 +112,7 @@ class Moderation(commands.Cog):
                     return
                 else:
 
-                    command = f"UPDATE Warnings set count = {count + 1} WHERE Name = '{username}'"
-                    values = {"Name": f"{username}", "count": int(count) + 1}
+                    command = f"UPDATE Warnings set count = {count + 1} WHERE userid = {userid}"
                     db.execute(command)
                     db.commit()
 

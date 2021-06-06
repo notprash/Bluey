@@ -184,4 +184,5 @@ async def on_member_remove(member):
 client.load_extension('commands')
 client.load_extension('music')
 client.load_extension('moderation')
+client.load_extension('levels')
 client.run(config('TOKEN'))
