@@ -38,7 +38,6 @@ class Music(commands.Cog):
             else:
                 await self.vc.move_to(self.music_queue[0][1])
             
-            print(self.music_queue)
             #remove the first element as you are currently playing it
             self.current_song = self.music_queue.pop(0)
             self.current_song = self.current_song[0]['title']
@@ -78,7 +77,7 @@ class Music(commands.Cog):
             await ctx.send("🚫 Connect to a voice channel!")
         else:
             song = self.search_song(query)
-            await ctx.send(f"🎵 **{song['title']}** added to **PandaQueue**")
+            await ctx.send(f"🎵 **{song['title']}** Added to the Queue")
             self.music_queue.append([song, voice_channel, ctx.author])
                 
             if self.is_playing == False:
@@ -105,10 +104,10 @@ class Music(commands.Cog):
         str = ""
         for song in self.music_queue:
             print(self.music_queue)
-            song_name = f"🎵 **{song[0]['title']} - {song[2].mention}**\n"
+            song_name = f"🎵 {song[0]['title']} - {song[2].mention}\n"
             str += song_name
-        embed = discord.Embed(title=f"Panda Queue | {len(self.music_queue)} songs left", description=str, color=ctx.author.color)
-        await ctx.send(f"**{self.current_song}**", embed=embed)
+        embed = discord.Embed(title=f"Z Queue | {len(self.music_queue)} songs added", description=str, color=ctx.author.color)
+        await ctx.send(f"▶️ **{self.current_song}**", embed=embed)
 
 
 

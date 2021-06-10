@@ -6,7 +6,6 @@ from PIL import Image, ImageDraw, ImageOps, ImageFont
 from discord_slash import SlashCommand
 import sqlite3
 import os
-import pywal
 
 
 intents = discord.Intents.all()
@@ -184,5 +183,4 @@ async def on_member_remove(member):
 client.load_extension('commands')
 client.load_extension('music')
 client.load_extension('moderation')
-client.load_extension('levels')
 client.run(config('TOKEN'))
