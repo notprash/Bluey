@@ -65,7 +65,7 @@ class Levels(commands.Cog):
         im.putalpha(alpha)
         return im
 
-    def make_image(self, xp, final_xp, rank, level, name):
+    def make_image(self, xp, final_xp, rank, level, name, start_xp):
         # load background image
         background = Image.new("RGBA", (700, 300), '#1a1a1a')
 
@@ -125,7 +125,7 @@ class Levels(commands.Cog):
             rank = rank.fetchone()[0] + 1
             final_xp = self.calculate_xp(level + 1)
             name = f"{member.name}#{member.discriminator}"
-            self.make_image(xp, final_xp, rank, level, name)
+            self.make_image(xp, final_xp, rank, level, name, self.calculate_lvl(level))
 
         file = discord.File("rank.png")
         await ctx.send(file=file)
