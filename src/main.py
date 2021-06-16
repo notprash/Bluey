@@ -6,7 +6,6 @@ from PIL import Image, ImageDraw, ImageOps, ImageFont
 from discord_slash import SlashCommand
 import sqlite3
 import os
-import pywal
 
 
 intents = discord.Intents.all()
