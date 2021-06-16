@@ -51,7 +51,7 @@ async def on_ready():
     print("Bot is ready")
 
     # Changes Bot Status
-    await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=" Ku Fu Panda"))
+    await client.change_presence(activity=discord.Activity(type=discord.ActivityType.playing, name=" !help"))
 
 
 @client.event
@@ -80,7 +80,6 @@ async def on_guild_join(guild):
 
 @client.event
 async def on_guild_remove(guild):
-    data = read_database(guild.id)[0]
 
     # Deletes server data from the bot when the bot removed from the server 
     with sqlite3.connect("db.sqlite3") as db: 
