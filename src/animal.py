@@ -1,43 +1,58 @@
-from discord.embeds import Embed
-from discord.ext import commands
+# Imports
 import discord
+from discord.ext import commands
+from discord.embeds import Embed
 from requests import get
-import random
 
-
+# Links for API Call
 dkey = 'https://dog.ceo/api/breeds/image/random'
 ckey = 'https://api.thecatapi.com/v1/images/search'
+pkey = 'https://some-random-api.ml/img/panda'
+rpkey = 'https://some-random-api.ml/img/red_panda'
 
 
 class Animal(commands.Cog):
     def __init__(self, bot):
         self.client = bot
 
+#### Command for Dog pics
+
     @commands.command()
-    async def dog(self, ctx):
+    async def dog(self, ctx): 
         data = get(dkey).json()
         dog = data['message']
-
-        emb = discord.Embed(title = 'Dogs') # The embed
+        emb = discord.Embed(title = 'Dogs') 
         emb.set_image(url = dog)
-
         await ctx.send(embed = emb)
+
+#### Command for Cat pics
 
     @commands.command()
     async def cat(self, ctx):
         data = get(ckey).json()
         cat = data[0]['url']
-        emb = discord.Embed(title = 'Cats') # The embed
+        emb = discord.Embed(title = 'Cats') 
         emb.set_image(url = cat)
         await ctx.send(embed = emb)
+    
+#### Command for Panda pics
 
+    @commands.command()
+    async def panda(self, ctx):
+        data = get(pkey).json()
+        panda = data['link']
+        emb = discord.Embed(title = 'Pandas')
+        emb.set_image(url = panda)
+        await ctx.send(embed = emb)
+    
+    @commands.command()
+    async def rpanda(self, ctx):
+        data = get(rpkey).json()
+        panda = data['link']
+        emb = discord.Embed(title = 'Red Pandas')
+        emb.set_image(url = panda)
+        await ctx.send(embed = emb)
+    
 def setup(bot):
     bot.add_cog(Animal(bot)) 
 
-# data = get(ckey).json()
-# breed_num = len(data[0]['breeds'])
-# breed_name = ''
-# for breed in range(breed_num):
-#     breed_name += data[0]['breeds'][breed]['name']
-# breed = breed_name
-# print(breed_name)
