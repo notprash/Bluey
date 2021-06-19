@@ -35,14 +35,19 @@ class Fun(commands.Cog):
         for i in link:
             if i.get('itemprop') == 'url':
                 wallpaper.append(i)
-        wallpaper.pop(0)
-        
-        random_wall = random.choice(wallpaper)
-        image = random_wall.contents[1].get('data-src') 
-        
-        emb = discord.Embed(title = query) 
-        emb.set_image(url = image)
-        await ctx.send(embed = emb)
+
+        if len(wallpaper) == 0:
+            await ctx.send('Sorry! Wallpaper not found :( ')
+        else:
+            wallpaper.pop(0)
+            random_wall = random.choice(wallpaper)
+            image = random_wall.contents[1].get('data-src') 
+            webpage = random_wall.get('href')
+
+            description = f"[Wallpaper Link]({webpage})"
+            emb = discord.Embed(title = query, description = description)
+            emb.set_image(url = image)
+            await ctx.send(embed = emb)
 
 def setup(bot):
     bot.add_cog(Fun(bot))
