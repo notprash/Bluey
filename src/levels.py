@@ -125,7 +125,7 @@ class Levels(commands.Cog):
             rank = rank.fetchone()[0] + 1
             final_xp = self.calculate_xp(level + 1)
             name = f"{member.name}#{member.discriminator}"
-            self.make_image(xp, final_xp, rank, level, name, self.calculate_lvl(level))
+            self.make_image(xp, final_xp, rank, level, name, self.calculate_xp(level))
 
         file = discord.File("rank.png")
         await ctx.send(file=file)
@@ -137,8 +137,29 @@ class Levels(commands.Cog):
         os.remove('rank.png')
        
 
+    @commands.command()
+    async def top(self, ctx ):
+        with sql.connect("db.sqlite3") as db:
+            cursor = db.execute(f'SELECT user, xp, level FROM Levels WHERE Guild = {ctx.guild.id} ORDER BY xp DESC ')
+            data = cursor.fetchall()
+            i = 0
+            embed = discord.Embed().set_author(name="Leaderboard", icon_url=self.client.user.avatar_url)
+            embed.set_thumbnail(url=ctx.guild.icon_url)
+            for row in data:
+                userid, xp, level = row
+                user = await self.client.fetch_user(userid)
+                value = f"    XP: `{xp}`\n     Level: `{level}`"
+                if i == 0:
+                    user = f"<:infinity_winner:855083626647650345>  <a:arrow:855079459656564767> {user}"
+                    embed.add_field(name=user, value=value, inline=False)
+                    i += 1
+                    continue
 
+                user = f"#{i + 1} <a:arrow:855079459656564767>  {user}"
+                embed.add_field(name=user, value=value, inline=False)
+                i += 1
 
+        await ctx.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -150,7 +171,7 @@ class Levels(commands.Cog):
         
         guildid, userid, xp, level = result
 
-        xp += random.randint(5, 40)
+        xp += random.randint(5, 30)
 
         if self.calculate_lvl(xp) > level:
             level += 1
@@ -159,6 +180,9 @@ class Levels(commands.Cog):
         with sql.connect('db.sqlite3') as db:
             db.execute(f'Update Levels set xp = {xp}, level = {level} WHERE Guild = {guildid} and user = {userid}')
             db.commit()
+
+
+
 
 def setup(bot):
     bot.add_cog(Levels(bot))
