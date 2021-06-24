@@ -179,7 +179,7 @@ async def on_member_remove(member):
         await client.get_channel(channel_id).send(f'{member.name} just left the server.')
 
 
-client.load_extension('commands')
+client.load_extension('admin')
 client.load_extension('music')
 client.load_extension('moderation')
 client.load_extension('fun')

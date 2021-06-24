@@ -2,7 +2,6 @@ from discord.ext import commands
 import discord
 import praw
 from decouple import config
-from praw.reddit import Submission
 import asyncio
 
 r = praw.Reddit(client_id = config("client_id"), 

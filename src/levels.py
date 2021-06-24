@@ -161,6 +161,22 @@ class Levels(commands.Cog):
 
         await ctx.send(embed=embed)
 
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def setlvl(self, ctx, member: discord.Member, lvl: int):
+        guildid, userid, xp, level = self.find_or_insert_user(member)
+        
+        xp = self.calculate_xp(lvl)
+        level = lvl
+        with sql.connect("db.sqlite3") as db:
+            db.execute(f'Update Levels set xp = {xp}, level = {level} WHERE Guild = {guildid} and user = {userid}')
+            db.commit()
+
+
+        color = discord.Color.green()
+        embed = discord.Embed(description=f"Level set {level} for {member.mention}", color=color)
+        await ctx.send(embed=embed)
+
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.bot:
@@ -175,7 +191,7 @@ class Levels(commands.Cog):
 
         if self.calculate_lvl(xp) > level:
             level += 1
-            await message.channel.send(f"Congrats {message.author.mention}, You have reached level {level} 🥳")
+            await message.channel.send(f"Congrats {message.author.mention}, You have reached level {level} <a:wumpuscongrats:857438443441618954>")
 
         with sql.connect('db.sqlite3') as db:
             db.execute(f'Update Levels set xp = {xp}, level = {level} WHERE Guild = {guildid} and user = {userid}')
