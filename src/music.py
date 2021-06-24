@@ -20,7 +20,6 @@ class Music(commands.Cog):
             except Exception: 
                 return False
 
-        print(info)
 
         return {'source': info['formats'][0]['url'], 'title': info['title']}
         
@@ -76,8 +75,9 @@ class Music(commands.Cog):
             #you need to be connected so that the bot knows where to go
             await ctx.send("🚫 Connect to a voice channel!")
         else:
+            msg = await ctx.send('🕐 `Searching.....`')
             song = self.search_song(query)
-            await ctx.send(f"🎵 **{song['title']}** Added to the Queue")
+            await msg.edit(content=f"🎵 **{song['title']}** Added to the Queue")
             self.music_queue.append([song, voice_channel, ctx.author])
                 
             if self.is_playing == False:
@@ -91,21 +91,45 @@ class Music(commands.Cog):
             await self.play_music()
 
     @commands.command()
-    async def disconnect(self, ctx):
+    async def stop(self, ctx):
         for x in self.client.voice_clients:
             if(x.guild == ctx.message.guild):
-                return await x.disconnect()
+                self.music_queue = []
+                await x.disconnect()
+                embed = discord.Embed(description="Cleared the music queue", color=discord.Color.red())
+                return await ctx.send(embed=embed)
+
 
         return await ctx.send("I am not connected to any voice channel on this server!")
 
 
     @commands.command()
+    async def jump(self, ctx, index: int):
+        if len(self.music_queue) > 0:
+            self.is_playing = True
+
+            #get the first url
+            m_url = self.music_queue[index - 1][0]['source']
+            self.music_queue = self.music_queue[index - 1: ]
+
+            #remove the first element as you are currently playing it
+
+            self.vc.stop()
+            self.vc.play(discord.FFmpegPCMAudio(m_url, **self.FFMPEG_OPTIONS), after=lambda e: self.play_next())
+        else:
+            self.is_playing = False
+
+
+
+    @commands.command()
     async def queue(self, ctx):
         str = ""
+        i = 1
         for song in self.music_queue:
             print(self.music_queue)
-            song_name = f"🎵 {song[0]['title']} - {song[2].mention}\n"
+            song_name = f"[{i}] 🎵 {song[0]['title']} - {song[2].mention}\n"
             str += song_name
+            i += 1
         embed = discord.Embed(title=f"Z Queue | {len(self.music_queue)} songs added", description=str, color=ctx.author.color)
         await ctx.send(f"▶️ **{self.current_song}**", embed=embed)
 
