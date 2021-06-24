@@ -5,6 +5,7 @@ import math
 import random
 from PIL import Image, ImageDraw, ImageOps, ImageFont
 import os
+from utilities import read_database, update_database
 
 class Levels(commands.Cog):
     def __init__(self, bot):
@@ -186,16 +187,36 @@ class Levels(commands.Cog):
         result = self.find_or_insert_user(message.author)
         
         guildid, userid, xp, level = result
+        
+        # Value 0 == No level up channel
+        levelup_channel = read_database(message.guild.id)[6]
 
-        xp += random.randint(5, 30)
+        xp += random.randint(1, 10)
 
-        if self.calculate_lvl(xp) > level:
+        if self.calculate_lvl(xp) > level and levelup_channel == 0:
             level += 1
             await message.channel.send(f"Congrats {message.author.mention}, You have reached level {level} <a:wumpuscongrats:857438443441618954>")
+        elif self.calculate_lvl(xp) > level:
+            channel = await self.client.fetch_channel(levelup_channel)
+            level += 1
+            await channel.send(f"Congrats {message.author.mention}, You have reached level {level} <a:wumpuscongrats:857438443441618954>")
+
+
 
         with sql.connect('db.sqlite3') as db:
             db.execute(f'Update Levels set xp = {xp}, level = {level} WHERE Guild = {guildid} and user = {userid}')
             db.commit()
+
+
+    @commands.command()
+    async def levelup(self, ctx, type, channel: discord.TextChannel):
+        if type == 'channel':
+            print(channel)
+            update_database("Settings", 'levelup', channel.id, 'guildId', ctx.guild.id)
+            embed = discord.Embed(description=f"Now {channel.mention} will recieve level up notifications", color=discord.Color.green())
+            await ctx.send(embed=embed)
+            
+
 
 
 

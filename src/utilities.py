@@ -7,9 +7,9 @@ def read_database(guildId):
         command = f"SELECT * FROM Settings WHERE GuildId = '{guildId}'"
 
         data = db.execute(command)
-        data = data.fetchall()
+        data = data.fetchone()
 
-    return data[0]
+    return data
 
 def update_database(database, setting, value, condition_parameter, condition_value):
     with sqlite3.connect("db.sqlite3") as db:
