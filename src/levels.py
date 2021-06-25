@@ -1,3 +1,4 @@
+from operator import truediv
 import discord
 from discord.ext import commands
 import sqlite3 as sql
@@ -5,7 +6,7 @@ import math
 import random
 from PIL import Image, ImageDraw, ImageOps, ImageFont
 import os
-from utilities import read_database, update_database
+from utilities import read_database, update_database, has_admin_permissions
 
 class Levels(commands.Cog):
     def __init__(self, bot):
@@ -178,6 +179,16 @@ class Levels(commands.Cog):
         embed = discord.Embed(description=f"Level set {level} for {member.mention}", color=color)
         await ctx.send(embed=embed)
 
+    def check_if_level_up_role(self, level, guildid):
+        with sql.connect('db.sqlite3') as db:
+            cursor = db.execute(f"SELECT * FROM Levelups WHERE guildId = {guildid}")
+            values = cursor.fetchone()
+            if values[2] == level:
+                return values[1] 
+
+        return False
+
+
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.bot:
@@ -191,14 +202,22 @@ class Levels(commands.Cog):
         # Value 0 == No level up channel
         levelup_channel = read_database(message.guild.id)[6]
 
-        xp += random.randint(1, 10)
+        xp += random.randint(5, 10)
 
         if self.calculate_lvl(xp) > level and levelup_channel == 0:
             level += 1
+            value = self.check_if_level_up_role(level, message.guild.id)
+            if value != False:
+                role = discord.utils.get(message.guild.roles, id=value)
+                await message.author.add_roles(role)
             await message.channel.send(f"Congrats {message.author.mention}, You have reached level {level} <a:wumpuscongrats:857438443441618954>")
         elif self.calculate_lvl(xp) > level:
             channel = await self.client.fetch_channel(levelup_channel)
             level += 1
+            value = self.check_if_level_up_role(level, message.guild.id)
+            if value != False:
+                role = message.guild.get_role(value)
+                await message.author.add_roles(role)
             await channel.send(f"Congrats {message.author.mention}, You have reached level {level} <a:wumpuscongrats:857438443441618954>")
 
 
@@ -209,12 +228,35 @@ class Levels(commands.Cog):
 
 
     @commands.command()
-    async def levelup(self, ctx, type, channel: discord.TextChannel):
+    @commands.has_permissions(administrator=True)
+    async def levelup(self, ctx, type, channel: discord.TextChannel=None):
         if type == 'channel':
-            print(channel)
             update_database("Settings", 'levelup', channel.id, 'guildId', ctx.guild.id)
             embed = discord.Embed(description=f"Now {channel.mention} will recieve level up notifications", color=discord.Color.green())
             await ctx.send(embed=embed)
+
+        elif type == "default":
+            update_database("Settings", 'levelup', 0, 'guildId', ctx.guild.id)
+            await ctx.send("✅ Restored defaults")
+
+
+    @commands.command()
+    @has_admin_permissions()
+    async def giverole(self, ctx, level: int, role: discord.Role):
+        with sql.connect('db.sqlite3') as db:
+            try:
+                db.execute("CREATE TABLE Levelups (guildId int, roleId int PRIMARY KEY, level int)")
+            except:
+                print("Table Exists")
+
+
+            cursor = db.execute(f"INSERT INTO Levelups VALUES(?, ?, ?)", (ctx.guild.id, role.id, level))
+            db.commit()
+
+        
+
+        
+
             
 
 
