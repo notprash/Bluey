@@ -77,6 +77,13 @@ class Admin(commands.Cog):
 
         await ctx.send('<a:tick:857439616877199360> Channel Unlocked.')
 
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def warncount(self, ctx, count):
+        
+        update_database("Settings", 'warncount', int(count), 'GuildId', ctx.guild.id)
+
+        await ctx.send(f"⚠️ Warn Count changed to {count}")
 
 
 # Add bot as an extension

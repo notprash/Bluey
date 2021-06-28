@@ -119,14 +119,40 @@ class Moderation(commands.Cog):
 
         await ctx.send(f"{member} has been warned")
 
-    
     @commands.command()
-    @commands.has_permissions(administrator=True)
-    async def warncount(self, ctx, count):
-        
-        update_database("Settings", 'warncount', int(count), 'GuildId', ctx.guild.id)
+    @commands.has_permissions(ban_members=True, kick_members=True)
+    async def removewarn(self, ctx, member: discord.Member, warncount=1):
+        with sqlite3.connect("db.sqlite3") as db:
+            try: 
+                command = "CREATE TABLE Warnings (userid int, count int, guildId int)"
+                db.execute(command)
+                db.commit()
+            except Exception:
+                print("Table Exists")
 
-        await ctx.send(f"⚠️ Warn Count changed to {count}")
+            userid = member.id
+            command = f"SELECT count FROM Warnings WHERE userid = {userid} AND guildId = {ctx.guild.id}"
+            result = db.execute(command)
+            count = result.fetchone()[0]
+            if count <= 0:
+                return await ctx.send(f"{member.mention} has not warnings yet")
+            count = count - warncount
+            if count < 0:
+                count = 0
+
+            db.execute(f"Update Warnings set count = {count} WHERE guildId = {ctx.guild.id}")
+            db.commit()
+            
+        if warncount == 1:
+            await ctx.send(f"✅ **{warncount} warn** has been removed from {member.mention}")
+        else:
+            await ctx.send(f"✅ **{warncount} warns** has been removed from {member.mention}")
+
+
+        
+
+
+    
 
 def setup(bot):
     bot.add_cog(Moderation(bot))
