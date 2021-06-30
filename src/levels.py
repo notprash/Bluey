@@ -253,15 +253,5 @@ class Levels(commands.Cog):
             cursor = db.execute(f"INSERT INTO Levelups VALUES(?, ?, ?)", (ctx.guild.id, role.id, level))
             db.commit()
 
-        
-
-        
-
-            
-
-
-
-
-
 def setup(bot):
     bot.add_cog(Levels(bot))

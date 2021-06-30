@@ -75,18 +75,22 @@ class Fun(commands.Cog):
         embed.set_author(name=f"{ctx.guild.name}'s stats",
                          icon_url=ctx.guild.icon_url)
 
-        # Discord Server ID
-        embed.add_field(name="ID", value=f"`{ctx.guild.id}`", inline=False)
+        time = ctx.guild.created_at
+        time = time.strftime("%d/%m/%Y")
+        embed.add_field(name="🆔 ID", value=f"`{ctx.guild.id}`")
+        embed.add_field(name="👑 Owner", value=ctx.guild.owner.mention)
+        embed.add_field(name="📆 Created on", value=time)
+        embed.add_field(name="<a:nitroboost:859792594032918558>  Boosts", value=ctx.guild.premium_subscription_count)
 
-        # Get Total Member Count
+
         member_count = len(
             [member for member in ctx.guild.members if not member.bot])
-        embed.add_field(name="Total Members", value=f"`{member_count}`")
+        embed.add_field(name="👤 Members", value=f"`{member_count}`")
 
-        embed.add_field(name="Total Roles", value=f"`{len(ctx.guild.roles)}`")
+        embed.add_field(name="Roles", value=f"`{len(ctx.guild.roles)}`")
+        embed.add_field(name=f"💬 Channels ({len(ctx.guild.text_channels) + len(ctx.guild.voice_channels)})", value=f"{len(ctx.guild.text_channels)} Text | {len(ctx.guild.voice_channels)} Voice")
+        embed.set_thumbnail(url=ctx.guild.icon_url)
 
-        embed.add_field(
-            name="Owner", value=ctx.guild.owner.mention, inline=False)
 
         await ctx.send(embed=embed)
     @commands.command()
