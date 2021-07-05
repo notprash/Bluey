@@ -181,7 +181,10 @@ class Levels(commands.Cog):
 
     def check_if_level_up_role(self, level, guildid):
         with sql.connect('db.sqlite3') as db:
-            cursor = db.execute(f"SELECT * FROM Levelups WHERE guildId = {guildid}")
+            try:
+                cursor = db.execute(f"SELECT * FROM Levelups WHERE guildId = {guildid}")
+            except:
+                return False
             values = cursor.fetchone()
             if values[2] == level:
                 return values[1] 
@@ -202,11 +205,13 @@ class Levels(commands.Cog):
         # Value 0 == No level up channel
         levelup_channel = read_database(message.guild.id)[6]
 
-        xp += random.randint(5, 10)
+        xp += random.randint(5, 15)
 
         if self.calculate_lvl(xp) > level and levelup_channel == 0:
             level += 1
+            
             value = self.check_if_level_up_role(level, message.guild.id)
+
             if value != False:
                 role = discord.utils.get(message.guild.roles, id=value)
                 await message.author.add_roles(role)
