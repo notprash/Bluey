@@ -7,11 +7,17 @@ from discord_slash import SlashCommand
 import sqlite3
 import os
 
+def get_prefix(client, msg):
+    # get prefix
+    prefix = read_database(msg.guild.id)[8]
+
+    return prefix
 
 intents = discord.Intents.all()
 
-client = commands.Bot(command_prefix='!', intents=intents)
+client = commands.Bot(command_prefix=get_prefix, intents=intents)
 slash = SlashCommand(client, sync_commands=True)
+
 
 @slash.slash(name="poll", description='Creates a poll')
 async def poll(ctx, question, choice_a, choice_b, choice_c="", choice_d="", choice_e="", choice_f="", choice_g=""):
@@ -57,7 +63,7 @@ async def on_guild_join(guild):
 
     # Create table and field
     with sqlite3.connect('db.sqlite3') as db:
-        command = "CREATE TABLE Settings (GuildId int, welcomeChannel int, userLeaveChannel int, welcomeMsg int, userLeavemsg int, warncount int, levelup int, milestone int, prefix)"
+        command = "CREATE TABLE Settings (GuildId int, welcomeChannel int, userLeaveChannel int, welcomeMsg int, userLeavemsg int, warncount int, levelup int, milestone int, prefix TEXT)"
         try:
             db.execute(command)
             db.commit()

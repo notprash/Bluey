@@ -102,7 +102,7 @@ class Admin(commands.Cog):
             for value in values:
                 guildid, members = value
                 guild = self.client.get_guild(guildid)
-                server_members = [member.name for member in guild.members if not member.bot]
+                server_members = [member for member in guild.members if not member.bot]
                 member_count = len(server_members)
                 if member_count >= members:
                     channel = self.client.get_channel(read_database(guild.id)[7])
@@ -162,9 +162,15 @@ class Admin(commands.Cog):
                 await ctx.send(f"Selected {channel.mention} for Milestone events")
 
 
-            
+    @commands.command()
+    @has_admin_permissions()
+    async def prefix(self, ctx, prefix):
+        with sqlite3.connect("db.sqlite3") as db:
+            sql = f"UPDATE Settings SET prefix = '{prefix}' WHERE guildId = {ctx.guild.id}" 
+            db.execute(sql)
+            db.commit()
 
-
+        await ctx.send(f"Prefix set to {prefix}")
 
 # Add bot as an extension
 def setup(bot):
