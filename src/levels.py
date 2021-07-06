@@ -54,6 +54,27 @@ class Levels(commands.Cog):
         output.putalpha(mask)
         output.save('output.png')
 
+    def get_colors(self, image_file, numcolors=10, resize=150):
+        # Resize image to speed up processing
+        img = Image.open(image_file)
+        img = img.copy()
+        img.thumbnail((resize, resize))
+
+        # Reduce to palette
+        paletted = img.convert('P', palette=Image.ADAPTIVE, colors=numcolors)
+
+        # Find dominant colors
+        palette = paletted.getpalette()
+        color_counts = sorted(paletted.getcolors(), reverse=True)
+        colors = list()
+        for i in range(numcolors):
+            palette_index = color_counts[i][1]
+            dominant_color = palette[palette_index*3:palette_index*3+3]
+            colors.append(tuple(dominant_color))
+
+        return colors
+
+
     def add_corners(self, im, rad):
         circle = Image.new('L', (rad * 2, rad * 2), 0)
         draw = ImageDraw.Draw(circle)
@@ -67,52 +88,61 @@ class Levels(commands.Cog):
         im.putalpha(alpha)
         return im
 
-    def make_image(self, xp, final_xp, rank, level, name, start_xp):
+    def make_image(self, xp, final_xp, rank, level, name):
+
         # load background image
-        background = Image.new("RGBA", (700, 300), '#1a1a1a')
+        background = Image.new("RGBA", (593, 316), '#535353')
 
         # load rectangle(progress bar)
         draw = ImageDraw.Draw(background)
 
         bar_x1 = 0
-        bar_y1 = 295
-        bar_x2 = 700
-        bar_y2 = 300
-        draw.rectangle([bar_x1, bar_y1, bar_x2, bar_y2], fill="#000000")
+        bar_y1 = 306
+        bar_x2 = 690
+        bar_y2 = 316
+        circle_size = bar_y2 - bar_y1
+        draw.ellipse((bar_x1 - circle_size//2, bar_y1, bar_x1 + circle_size//2, bar_y1 + circle_size), fill="#9b9e9c")
+
+        draw.ellipse((bar_x2 - circle_size//2, bar_y1, bar_x2 + circle_size//2, bar_y2), fill="#9b9e9c")
+        draw.rectangle([bar_x1, bar_y1, bar_x2, bar_y2], fill="#9b9e9c")
 
 
         percent = round((xp/final_xp) * 100)
         size_progress_bar = int((bar_x2 - bar_x1)  * percent/100)  
         bar_x2 = bar_x1 + size_progress_bar
+        draw.ellipse((bar_x1 - circle_size//2, bar_y1, bar_x1 + circle_size//2, bar_y1 + circle_size), fill="#00a8f3")
 
-        draw.rectangle([bar_x1, bar_y1, bar_x2, bar_y2], fill="#11ebf2")
+        draw.ellipse((bar_x2 - circle_size//2, bar_y1, bar_x2 + circle_size//2, bar_y2), fill="#00a8f3")
+        draw.rectangle([bar_x1, bar_y1, bar_x2, bar_y2], fill='#00a8f3')
 
 
-        self.create_circular_image('avatar.jpg', (170, 170))
+
+        self.create_circular_image('avatar.jpg', (177, 176))
         img = Image.open('output.png').convert('RGBA')
-        background.paste(img, (10, 50), img)
+        background.paste(img, (15, 75), img)
 
-        font = ImageFont.truetype('Font.ttf', 28)
-        font2 = ImageFont.truetype('Font.ttf', 23)
-        font3 = ImageFont.truetype('Font.ttf', 30)
+        font2 = ImageFont.truetype('Font.ttf', 32)
+        font3 = ImageFont.truetype('Font.ttf', 40)
+        font4 = ImageFont.truetype("Font.ttf", 25)
 
-        draw.text((360, 100), "LVL", font=font, fill='#58e1e8')
-        draw.text((360, 160), "#" + str(level), font=font2, fill=(255, 255, 255))
-        draw.text((250, 100), "RANK", font=font, fill='#58e1e8')
-        draw.text((250, 160), "#" + str(rank), font=font2, fill=(255, 255, 255))
-        draw.text((300, 30), name, font=font3, fill='#7373d1')
+        draw.text((218, 90), f"LEVEL\n\n {level}", font=font2, fill=(255, 255, 255))
+        draw.text((347, 91), f"RANK\n\n# {rank}", font=font2, fill=(255, 255, 255))
+        draw.text((260, 250), f"{xp}/{final_xp}", font=font4, fill=(255, 255, 255))
 
 
+        W, H = 593, 316
+        w, h = draw.textsize(name, font=font3)
+        draw.text(((W-w)/2 + 6, 20), name, font=font3, fill=(255, 255, 255))
 
-        self.create_circular_image('1.jpg', (100, 100))
+        self.create_circular_image('1.jpg', (80, 80))
         img = Image.open('output.png').convert('RGBA')
-        draw.line((470, 75, 470, 250), fill=(255, 255, 255))
-        draw.text((500, 200), f"{xp}/{final_xp}", font=font2, fill='#7373d1')
-        background.paste(img, (500, 80), img)
+        draw.rectangle((464, 58, 467, 257), fill='#48ebfa')
+        draw.rectangle((468, 118, 489, 121), fill='#48ebfa')
+        background.paste(img, (489, 79), img)
 
 
         # save image
-        round_corners = self.add_corners(background, 50)
+        round_corners = self.add_corners(background, 30)
         round_corners.save("rank.png")
 
 
@@ -127,7 +157,7 @@ class Levels(commands.Cog):
             rank = rank.fetchone()[0] + 1
             final_xp = self.calculate_xp(level + 1)
             name = f"{member.name}#{member.discriminator}"
-            self.make_image(xp, final_xp, rank, level, name, self.calculate_xp(level))
+            self.make_image(xp, final_xp, rank, level, name)
 
         file = discord.File("rank.png")
         await ctx.send(file=file)

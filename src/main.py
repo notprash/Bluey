@@ -145,7 +145,7 @@ async def on_member_join(member):
         background.paste(im, (230, 40), im)
 
         # Add Text
-        font = ImageFont.truetype('Roboto-Regular.ttf', 30)
+        font = ImageFont.truetype('Roboto-Regular.ttf', 20)
         draw = ImageDraw.Draw(background)
         draw.text((150, 320), f"{member.name}#{member.discriminator} just joined the server",
                   (255, 255, 255), font=font)
