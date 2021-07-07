@@ -115,6 +115,7 @@ def get_colors(image_file, numcolors=10, resize=150):
 @client.event
 async def on_member_join(member):
     settings = read_database(member.guild.id)
+    username = f"{member.name}# {member.discriminator}"
 
     # Checks if welcome msg is enabled
     enabled = bool(settings[3])
@@ -123,32 +124,33 @@ async def on_member_join(member):
 
         await member.avatar_url.save("avatar.png")
 
-        # Create Circular Image
-        size = (256, 256)
+
+        W, H = (593, 316)
+        size = (216, 192)
         mask = Image.new('L', size, 0)
         draw = ImageDraw.Draw(mask) 
         draw.ellipse((0, 0) + size, fill=255)
 
         im = Image.open('avatar.png').convert("RGBA")
-        colors = get_colors('avatar.png')
 
         output = ImageOps.fit(im, mask.size, centering=(0.5, 0.5))
         output.putalpha(mask)
+
         output.save('output.png')
-
         im = Image.open("output.png").convert("RGBA")
-        background = Image.new("RGBA", (700, 400), (0, 0, 0))
-        half = Image.new("RGBA", (700, 150) , colors[2])
+        colors = get_colors("output.png")
 
-        # Paste Images
-        background.paste(half, (0, 0))
-        background.paste(im, (230, 40), im)
 
-        # Add Text
-        font = ImageFont.truetype('Roboto-Regular.ttf', 20)
+        background = Image.new("RGBA", (W, H), '#535353')
+        background.paste(im, (200, 30), im)
+
+        font = ImageFont.truetype('Roboto.ttf', 24)
         draw = ImageDraw.Draw(background)
-        draw.text((150, 320), f"{member.name}#{member.discriminator} just joined the server",
-                  (255, 255, 255), font=font)
+        half = Image.new("RGBA", (593, 10), colors[0])
+        background.paste(half, (0, 306))
+        msg = f"{username} just landed"
+        w, h = draw.textsize(msg, font=font)
+        draw.text(((W-w)/2, 250), msg, fill=(255, 255, 255), font=font)
         background.save('foo.png')
 
         # Gets welcome msg channel

@@ -96,10 +96,10 @@ class Levels(commands.Cog):
         # load rectangle(progress bar)
         draw = ImageDraw.Draw(background)
 
-        bar_x1 = 0
-        bar_y1 = 306
-        bar_x2 = 690
-        bar_y2 = 316
+        bar_x1 = 182
+        bar_y1 = 240
+        bar_x2 = 400
+        bar_y2 = 270
         circle_size = bar_y2 - bar_y1
         draw.ellipse((bar_x1 - circle_size//2, bar_y1, bar_x1 + circle_size//2, bar_y1 + circle_size), fill="#9b9e9c")
 
@@ -119,6 +119,7 @@ class Levels(commands.Cog):
 
         self.create_circular_image('avatar.jpg', (177, 176))
         img = Image.open('output.png').convert('RGBA')
+        colors = self.get_colors('output.png')
         background.paste(img, (15, 75), img)
 
         font2 = ImageFont.truetype('Font.ttf', 32)
@@ -127,7 +128,7 @@ class Levels(commands.Cog):
 
         draw.text((218, 90), f"LEVEL\n\n {level}", font=font2, fill=(255, 255, 255))
         draw.text((347, 91), f"RANK\n\n# {rank}", font=font2, fill=(255, 255, 255))
-        draw.text((260, 250), f"{xp}/{final_xp}", font=font4, fill=(255, 255, 255))
+        draw.text((228, 246), f"{xp}/{final_xp}", font=font4, fill=(255, 255, 255))
 
 
         W, H = 593, 316
@@ -139,6 +140,10 @@ class Levels(commands.Cog):
         draw.rectangle((464, 58, 467, 257), fill='#48ebfa')
         draw.rectangle((468, 118, 489, 121), fill='#48ebfa')
         background.paste(img, (489, 79), img)
+
+
+        half = Image.new("RGBA", (593, 7), colors[2])
+        background.paste(half, (0, H - 7))
 
 
         # save image
