@@ -240,11 +240,11 @@ class Levels(commands.Cog):
         # Value 0 == No level up channel
         levelup_channel = read_database(message.guild.id)[6]
 
-        xp += random.randint(5, 15)
+        xp += random.randint(5, 40)
 
         if self.calculate_lvl(xp) > level and levelup_channel == 0:
             level += 1
-            
+            xp = 0
             value = self.check_if_level_up_role(level, message.guild.id)
 
             if value != False:
@@ -254,6 +254,7 @@ class Levels(commands.Cog):
         elif self.calculate_lvl(xp) > level:
             channel = await self.client.fetch_channel(levelup_channel)
             level += 1
+            xp = 0
             value = self.check_if_level_up_role(level, message.guild.id)
             if value != False:
                 role = message.guild.get_role(value)
@@ -282,16 +283,34 @@ class Levels(commands.Cog):
 
     @commands.command()
     @has_admin_permissions()
-    async def giverole(self, ctx, level: int, role: discord.Role):
+    async def giverole(self, ctx, type, *args):
         with sql.connect('db.sqlite3') as db:
             try:
                 db.execute("CREATE TABLE Levelups (guildId int, roleId int PRIMARY KEY, level int)")
             except:
                 print("Table Exists")
 
+            if type == 'add':
+                try:
+                    role = ctx.guild.get_role(int(args[1][3:-1]))
+                    level = int(args[0])
+                    cursor = db.execute(f"INSERT INTO Levelups VALUES(?, ?, ?)", (ctx.guild.id, role.id, level))
+                    db.commit()
+                    await ctx.send(f"User will recieve {role.mention} at level {level}")
+                except:
+                    await ctx.send("Role already added")
+            
+            elif type == 'remove':
+                role = ctx.guild.get_role(int(args[0][3:-1]))
+                try: 
+                    db.execute("DELETE FROM Levelups WHERE guildId = ? AND roleId = ?", (ctx.guild.id, role.id))
+                    db.commit()
+                    await ctx.send("✅ Role removed")
+                except:
+                    await ctx.send('🔴 Role does not exist')
 
-            cursor = db.execute(f"INSERT INTO Levelups VALUES(?, ?, ?)", (ctx.guild.id, role.id, level))
-            db.commit()
+
+
 
 def setup(bot):
     bot.add_cog(Levels(bot))
