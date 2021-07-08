@@ -33,6 +33,15 @@ class Levels(commands.Cog):
         return result
 
 
+    def check_if_xp_blocked(self, channel: discord.TextChannel, guild):
+        with sql.connect("db.sqlite3") as db:
+            values = db.execute(f"SELECT channel FROM Noxp WHERE guildId = {guild.id}").fetchall()
+            for value in values:
+                if value[0] == channel.id:
+                    return True
+
+
+        return False
 
     def calculate_lvl(self, xp):
         lvl = round(0.1 * math.sqrt(xp))
@@ -229,9 +238,16 @@ class Levels(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        if message.author.bot:
+        role = discord.utils.get(message.guild.roles, name='[xp blocked]')
+        if message.author.bot or role in message.author.roles:
             return
 
+        if self.check_if_xp_blocked(message.channel, message.guild):
+            return
+        
+        prefix = read_database(message.guild.id)[8]
+        if message.content.startswith(prefix):
+            return
 
         result = self.find_or_insert_user(message.author)
         
@@ -279,6 +295,46 @@ class Levels(commands.Cog):
         elif type == "default":
             update_database("Settings", 'levelup', 0, 'guildId', ctx.guild.id)
             await ctx.send("✅ Restored defaults")
+
+
+    @commands.command()
+    @commands.has_permissions(kick_members=True, ban_members=True)
+    async def xpblock(self, ctx, member: discord.Member):
+        role = discord.utils.get(ctx.guild.roles, name="[xp blocked]")
+        if role == None:
+            role = await ctx.guild.create_role(name="[xp blocked]")
+            await ctx.send(f"Xp blocked {member.mention}")
+            return await member.add_roles(role)
+
+        await ctx.send(f"Xp blocked {member.mention}")
+        return await member.add_roles(role)
+        # member.add_roles(roles=)
+
+    @commands.command()
+    @has_admin_permissions()
+    async def noxpchannel(self, ctx, type, channel: discord.TextChannel):
+        with sql.connect("db.sqlite3") as db:
+            try:
+                db.execute("CREATE TABLE Noxp (guildId int, channel int PRIMARY KEY)")
+                db.commit()
+            except:
+                pass
+
+            if type == 'add':
+                try:
+                    db.execute("INSERT INTO Noxp VALUES(?, ?)", (ctx.guild.id, channel.id))
+                    db.commit()
+                    await ctx.send(f"✅ {channel.mention} is now xp blocked channel")
+                except:
+                    await ctx.send(f"🔴 {channel.mention} already added")
+
+            elif type == 'remove':
+                try:
+                    db.execute(f"DELETE FROM Noxp WHERE guildId = {ctx.guild.id} AND channel = {channel.id}")
+                    db.commit()
+                    await ctx.send(f"✅ {channel.mention} is not xp blocked anymore")
+                except:
+                    await ctx.send(f"🔴 {channel.mention} channel is not added")
 
 
     @commands.command()
