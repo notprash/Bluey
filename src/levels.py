@@ -290,7 +290,7 @@ class Levels(commands.Cog):
             except:
                 print("Table Exists")
 
-            if type == 'add':
+            if type == 'add' and args != []:
                 try:
                     role = ctx.guild.get_role(int(args[1][3:-1]))
                     level = int(args[0])
@@ -300,7 +300,7 @@ class Levels(commands.Cog):
                 except:
                     await ctx.send("Role already added")
             
-            elif type == 'remove':
+            elif type == 'remove' and args != []:
                 role = ctx.guild.get_role(int(args[0][3:-1]))
                 try: 
                     db.execute("DELETE FROM Levelups WHERE guildId = ? AND roleId = ?", (ctx.guild.id, role.id))
@@ -308,6 +308,19 @@ class Levels(commands.Cog):
                     await ctx.send("✅ Role removed")
                 except:
                     await ctx.send('🔴 Role does not exist')
+            
+            elif type == 'list':
+                values = db.execute(f"SELECT roleId, level FROM Levelups WHERE guildId = {ctx.guild.id}").fetchall()
+                description = ""
+                for value in values:
+                    roleid, level = value
+                    role = discord.utils.get(ctx.guild.roles, id=roleid)
+                    description += f"**{level}** -- {role.mention} \n\n"
+
+                embed = discord.Embed(description=description)
+                embed.set_author(name="Levelup Roles", icon_url=ctx.guild.icon_url)
+                await ctx.send(embed=embed)
+
 
 
 
