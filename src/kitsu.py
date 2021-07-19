@@ -8,7 +8,7 @@ def getlist(dict):
         list.append(key)
     return list
 
-class Kitsu(commands.Cog):
+class Anime(commands.Cog):
     def __init__(self, bot):
         self.client = bot
 
@@ -102,4 +102,4 @@ class Kitsu(commands.Cog):
         await ctx.send(embed = emb)
 
 def setup(bot):
-    bot.add_cog(Kitsu(bot))
+    bot.add_cog(Anime(bot))

@@ -15,7 +15,7 @@ def get_prefix(client, msg):
 
 intents = discord.Intents.all()
 
-client = commands.Bot(command_prefix=get_prefix, intents=intents)
+client = commands.Bot(command_prefix=get_prefix, intents=intents, help_command=None)
 slash = SlashCommand(client, sync_commands=True)
 
 
@@ -188,4 +188,5 @@ client.load_extension("levels")
 client.load_extension("animal")
 client.load_extension("notifier")
 client.load_extension('kitsu')
+client.load_extension('help')
 client.run(config('TOKEN'))

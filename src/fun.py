@@ -27,7 +27,7 @@ class Fun(commands.Cog):
 
 #### Command for Wallpapers
 
-    @commands.command()
+    @commands.command(alias="wallpaper")
     async def w(self, ctx, *query):
         query = ' '.join(query)
         site = get(f'https://www.wallpaperflare.com/search?wallpaper={query}').text
