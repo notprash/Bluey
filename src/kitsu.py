@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 import kitsupy
+from utilities import help_embed
 
 def getlist(dict):
     list = []
@@ -14,6 +15,8 @@ class Anime(commands.Cog):
 
     @commands.command()
     async def anime(self, ctx, *query):
+        if await help_embed(ctx.channel, "anime <anime_name>", query):
+            return
         query = ' '.join(query)
         data = kitsupy.search('anime', query)
         id = getlist(data)
@@ -46,6 +49,8 @@ class Anime(commands.Cog):
 
     @commands.command()
     async def manga(self, ctx, *query):
+        if await help_embed(ctx.channel, "manga <manga_name>", query):
+            return
         query = ' '.join(query)
         data = kitsupy.search('anime', query)
         id = getlist(data)
@@ -78,6 +83,8 @@ class Anime(commands.Cog):
 
     @commands.command()
     async def char(self, ctx, *query):
+        if await help_embed(ctx.channel, "char <character_name>", query):
+            return
         query = ' '.join(query)
         data = kitsupy.search('characters', query)
         id = id = getlist(data)

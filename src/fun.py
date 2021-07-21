@@ -8,6 +8,7 @@ from decouple import config
 from googleapiclient.discovery import build
 from decouple import config
 from num2words import num2words
+from utilities import help_embed
 
 key = 'https://meme-api.herokuapp.com/gimme/'
 
@@ -27,8 +28,10 @@ class Fun(commands.Cog):
 
 #### Command for Wallpapers
 
-    @commands.command(alias="wallpaper")
+    @commands.command(aliases=["wallpaper"])
     async def w(self, ctx, *query):
+        if await help_embed(ctx.channel, "wallpaper <character_name>", query):
+            return
         query = ' '.join(query)
         site = get(f'https://www.wallpaperflare.com/search?wallpaper={query}').text
         soup = BeautifulSoup(site, 'lxml')
@@ -94,7 +97,9 @@ class Fun(commands.Cog):
 
         await ctx.send(embed=embed)
     @commands.command()
-    async def youtubestats(self, ctx, channelId):
+    async def youtubestats(self, ctx, channelId=None):
+        if await help_embed(ctx.channel, "youtubestats <channelId>", channelId):
+            return
 
         # Get api key
         api_key = config("APIKEY")

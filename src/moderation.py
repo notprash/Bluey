@@ -1,7 +1,7 @@
 from discord.ext import commands
 import discord
 import sqlite3
-from utilities import update_database
+from utilities import help_embed
 
 
 class Moderation(commands.Cog):
@@ -11,7 +11,9 @@ class Moderation(commands.Cog):
 
     @commands.command()
     @commands.has_permissions(kick_members=True, ban_members=True)
-    async def mute(self, ctx, member: discord.Member):
+    async def mute(self, ctx, member: discord.Member=None):
+        if await help_embed(ctx.channel, "mute <@member>", member):
+            return
         server = ctx.guild
         role = discord.utils.get(server.roles, name="Muted")
         if role != None:
@@ -30,7 +32,9 @@ class Moderation(commands.Cog):
 
     @commands.command()
     @commands.has_permissions(kick_members=True, ban_members=True)
-    async def unmute(self, ctx, member: discord.Member):
+    async def unmute(self, ctx, member: discord.Member=None):
+        if await help_embed(ctx.channel, "unmute <@member>", member):
+            return
         role = discord.utils.get(ctx.guild.roles, name="Muted")
         await member.remove_roles(role)
         await ctx.send(f"{member} has been unmuted")
@@ -38,13 +42,17 @@ class Moderation(commands.Cog):
 
     @commands.command()
     @commands.has_permissions(ban_members=True)
-    async def ban(self, ctx, member: discord.Member, reason="No Reason was provided"):
+    async def ban(self, ctx, member: discord.Member=None, reason="No Reason was provided"):
+        if await help_embed(ctx.channel, "ban <@member> <reason>", member):
+            return
         await ctx.send(f'{member.name} has been banned from the server')
         await member.ban(reason=reason)
 
     @commands.command()
     @commands.has_permissions(ban_members=True)
-    async def unban(self, ctx, member, reason="No Reason was provided"):
+    async def unban(self, ctx, member=None):
+        if await help_embed(ctx.channel, "unban <@member>", member):
+            return
         banned_users = await ctx.guild.bans()
 
         # Splits member_name, member_disc ie Prash#4945 = (Prash, 4945)
@@ -61,13 +69,17 @@ class Moderation(commands.Cog):
 
     @commands.command()
     @commands.has_permissions(kick_members=True)
-    async def kick(self, ctx, userName: discord.Member, reason="No reason was provided"):
+    async def kick(self, ctx, userName: discord.Member=None, reason="No reason was provided"):
+        if await help_embed(ctx.channel, "kick <@member> <reason>", userName):
+            return
         await userName.kick(reason=reason)
         await ctx.send(f"{userName} has been kicked from the server")
 
     @commands.command()
     @commands.has_permissions(kick_members=True, ban_members=True)
-    async def warn(self, ctx, member: discord.Member, reason="No reason"):
+    async def warn(self, ctx, member: discord.Member=None, reason="No reason"):
+        if await help_embed(ctx.channel, "warn <@member>", member):
+            return
         with sqlite3.connect("db.sqlite3") as db:
             try: 
                 command = "CREATE TABLE Warnings (userid int, count int, guildId int)"
@@ -119,9 +131,11 @@ class Moderation(commands.Cog):
 
         await ctx.send(f"{member} has been warned")
 
-    @commands.command()
+    @commands.command(aliases=['rwarn'])
     @commands.has_permissions(ban_members=True, kick_members=True)
-    async def removewarn(self, ctx, member: discord.Member, warncount=1):
+    async def removewarn(self, ctx, member: discord.Member=None, warncount=1):
+        if await help_embed(ctx.channel, "removewarn <@member> <warncount>", member):
+            return
         with sqlite3.connect("db.sqlite3") as db:
             try: 
                 command = "CREATE TABLE Warnings (userid int, count int, guildId int)"
@@ -147,10 +161,6 @@ class Moderation(commands.Cog):
             await ctx.send(f"✅ **{warncount} warn** has been removed from {member.mention}")
         else:
             await ctx.send(f"✅ **{warncount} warns** has been removed from {member.mention}")
-
-
-        
-
 
     
 

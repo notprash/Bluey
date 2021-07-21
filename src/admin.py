@@ -2,7 +2,7 @@ from os import read
 import sqlite3
 from discord.ext import commands
 import discord
-from utilities import has_admin_permissions, read_database, update_database
+from utilities import has_admin_permissions, help_embed, read_database, update_database
 from discord.ext.tasks import loop
 
 
@@ -42,22 +42,30 @@ class Admin(commands.Cog):
 
     @commands.command()
     @has_admin_permissions()
-    async def welcomeChannel(self, ctx, arg: discord.TextChannel):
+    async def welcomeChannel(self, ctx, arg: discord.TextChannel=None):
+        if await help_embed(ctx.channel, "welcomeChannel <#channel>", arg):
+            return
         await self.change_channel(ctx, arg, "welcomeChannel", "Welcome")
 
     @commands.command()
     @has_admin_permissions()
-    async def welcomeMsg(self, ctx, arg):
+    async def welcomeMsg(self, ctx, arg=None):
+        if await help_embed(ctx.channel, "welcomeMsg enable/disable", arg):
+            return
         await self.toggle_msgs(ctx, arg, "welcomeMsg", "Welcome")
 
     @commands.command()
     @has_admin_permissions()
-    async def userLeaveChannel(self, ctx, arg: discord.TextChannel):
+    async def userLeaveChannel(self, ctx, arg: discord.TextChannel=None):
+        if await help_embed(ctx.channel, "userLeaveChannel <#channel>", arg):
+            return
         await self.change_channel(ctx, arg, "userLeaveChannel", "User Leave")
 
     @commands.command()
     @has_admin_permissions()
-    async def userLeaveMsg(self, ctx, arg):
+    async def userLeaveMsg(self, ctx, arg=None):
+        if await help_embed(ctx.channel, "userLeaveMsg enable/disable", arg):
+            return
         await self.toggle_msgs(ctx, arg, "userLeaveMsg", "UserLeave")
 
    
@@ -88,7 +96,9 @@ class Admin(commands.Cog):
 
     @commands.command()
     @commands.has_permissions(administrator=True)
-    async def warncount(self, ctx, count):
+    async def warncount(self, ctx, count=None):
+        if await help_embed(ctx.channel, "warncount <count>", count):
+            return
         
         update_database("Settings", 'warncount', int(count), 'GuildId', ctx.guild.id)
 
@@ -120,7 +130,9 @@ class Admin(commands.Cog):
 
     @commands.command()
     @has_admin_permissions()
-    async def milestone(self, ctx, keyword, value=None, *value2):
+    async def milestone(self, ctx, keyword=None, value=None, *value2):
+        if await help_embed(ctx.channel, "milestone add <member_count> \n milestone remove <member_count>\n milestone list", keyword):
+            return
         with sqlite3.connect("db.sqlite3") as db:
             try:
                 db.execute("CREATE TABLE Milestones (guildId int, members int)")
@@ -164,7 +176,9 @@ class Admin(commands.Cog):
 
     @commands.command()
     @has_admin_permissions()
-    async def prefix(self, ctx, prefix):
+    async def prefix(self, ctx, prefix=None):
+        if await help_embed(ctx.channel, "prefix <prefix>", prefix):
+            return
         with sqlite3.connect("db.sqlite3") as db:
             sql = f"UPDATE Settings SET prefix = '{prefix}' WHERE guildId = {ctx.guild.id}" 
             db.execute(sql)

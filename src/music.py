@@ -1,6 +1,7 @@
 from discord.ext import commands
 from youtube_dl import YoutubeDL
 import discord
+from utilities import help_embed
 
 
 class Music(commands.Cog):
@@ -63,15 +64,18 @@ class Music(commands.Cog):
 
 
 
-    @commands.command()
+    @commands.command(aliases=['p'])
     async def play(self, ctx, *song_name):
         query = " ".join(song_name)
+
+        if await help_embed(ctx.channel, "play <song_name>", song_name):
+            return
         
         try: 
             voice_channel = ctx.author.voice.channel
         except Exception:
             voice_channel = None
-        if voice_channel is None:
+        if voice_channel == None:
             #you need to be connected so that the bot knows where to go
             await ctx.send("🚫 Connect to a voice channel!")
         else:
@@ -104,7 +108,9 @@ class Music(commands.Cog):
 
 
     @commands.command()
-    async def jump(self, ctx, index: int):
+    async def jump(self, ctx, index: int=None):
+        if await help_embed(ctx.channel, "jump <song_index>", index):
+            return
         if len(self.music_queue) > 0:
             self.is_playing = True
 
@@ -132,11 +138,6 @@ class Music(commands.Cog):
             i += 1
         embed = discord.Embed(title=f"Z Queue | {len(self.music_queue)} songs added", description=str, color=ctx.author.color)
         await ctx.send(f"▶️ **{self.current_song}**", embed=embed)
-
-
-
-
-
 
 
 def setup(bot):

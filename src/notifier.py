@@ -3,6 +3,7 @@ import discord
 import praw
 from decouple import config
 import asyncio
+from utilities import help_embed
 
 r = praw.Reddit(client_id = config("client_id"), 
 	client_secret = config('client_secret'), 
@@ -37,7 +38,12 @@ class Notifier(commands.Cog):
 			await asyncio.sleep(60)
 
 	@commands.command()
-	async def rnotify(self, ctx, subname, channel: discord.TextChannel):
+	async def rnotify(self, ctx, subname=None, channel: discord.TextChannel=None):
+		arg = 0
+		if subname == None or channel == None:
+			arg = None
+		if await help_embed(ctx.channel, "rnotify <subname> <#channel>", arg):
+			return
 		if self.sub_exists(subname):
 			self.client.loop.create_task(self.get_posts(subname, channel))
 			await ctx.send(f"r/{subname} added to {channel.mention} 🥳")

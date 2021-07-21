@@ -6,7 +6,7 @@ import math
 import random
 from PIL import Image, ImageDraw, ImageOps, ImageFont
 import os
-from utilities import read_database, update_database, has_admin_permissions
+from utilities import read_database, update_database, has_admin_permissions, help_embed
 
 class Levels(commands.Cog):
     def __init__(self, bot):
@@ -209,7 +209,11 @@ class Levels(commands.Cog):
 
     @commands.command()
     @commands.has_permissions(administrator=True)
-    async def setlvl(self, ctx, member: discord.Member, lvl: int):
+    async def setlvl(self, ctx, member: discord.Member=None, lvl: int=None):
+        if member == None or lvl == None:
+            arg = None
+        if await help_embed(ctx.channel, "setlvl <@member> <lvl>", arg):
+            return
         guildid, userid, xp, level = self.find_or_insert_user(member)
         
         xp = self.calculate_xp(lvl)
@@ -286,7 +290,9 @@ class Levels(commands.Cog):
 
     @commands.command()
     @commands.has_permissions(administrator=True)
-    async def levelup(self, ctx, type, channel: discord.TextChannel=None):
+    async def levelup(self, ctx, type=None, channel: discord.TextChannel=None):
+        if await help_embed(ctx.channel, "levelup channel <#channel>\n>levelup default", type):
+            return
         if type == 'channel':
             update_database("Settings", 'levelup', channel.id, 'guildId', ctx.guild.id)
             embed = discord.Embed(description=f"Now {channel.mention} will recieve level up notifications", color=discord.Color.green())
@@ -299,7 +305,9 @@ class Levels(commands.Cog):
 
     @commands.command()
     @commands.has_permissions(kick_members=True, ban_members=True)
-    async def xpblock(self, ctx, member: discord.Member):
+    async def xpblock(self, ctx, member: discord.Member=None):
+        if await help_embed(ctx.channel, "xpblock <@member>", member):
+            return
         role = discord.utils.get(ctx.guild.roles, name="[xp blocked]")
         if role == None:
             role = await ctx.guild.create_role(name="[xp blocked]")
@@ -312,7 +320,12 @@ class Levels(commands.Cog):
 
     @commands.command()
     @has_admin_permissions()
-    async def noxpchannel(self, ctx, type, channel: discord.TextChannel):
+    async def noxpchannel(self, ctx, type=None, channel: discord.TextChannel=None):
+        arg = None
+        if type == None or channel == None:
+            arg = None
+        if await help_embed(ctx.channel, "noxpchannel add <#channel>\n>noxpchannel remove <#channel>", arg):
+            return
         with sql.connect("db.sqlite3") as db:
             try:
                 db.execute("CREATE TABLE Noxp (guildId int, channel int PRIMARY KEY)")
@@ -339,7 +352,9 @@ class Levels(commands.Cog):
 
     @commands.command()
     @has_admin_permissions()
-    async def giverole(self, ctx, type, *args):
+    async def giverole(self, ctx, type=None, *args):
+        if await help_embed(ctx.channel, "giverole add <lvl> <@role>\n>giverole remove <@role>\n>giverole list", type):
+            return
         with sql.connect('db.sqlite3') as db:
             try:
                 db.execute("CREATE TABLE Levelups (guildId int, roleId int PRIMARY KEY, level int)")
