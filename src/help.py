@@ -34,7 +34,6 @@ class Help(commands.Cog):
             embed.add_field(name="👀 Fun", value=f"`{prefix}help Fun`")
             embed.add_field(name="Milestones", value=f"`{prefix}help Milestones`")
             embed.add_field(name="Anime", value=f"`{prefix}help Anime`")
-            embed.add_field(name="Notifier", value=f"`{prefix}help Notifier`")
             
             links = "[Invite](https://discord.com/api/oauth2/authorize?client_id=823908962428387338&permissions=8&scope=bot%20applications.commands)"
             embed.add_field(name="Links", value=links, inline=False)
