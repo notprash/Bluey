@@ -9,7 +9,8 @@ class Help(commands.Cog):
 
     @commands.command(name='help', description="The help command")
     async def help(self, ctx, cog_name: str=None):
-        cog_name = cog_name.capitalize()
+        if cog_name != None:
+            cog_name = cog_name.capitalize()
         cogs_names = self.client.cogs.keys()
         cog_dict = {}
         cog_emojis = {"Admin": "🔒", "Levels": '🥳', "Moderation": '🕵️', 'Music': '💿', 'Animal': '💿', 'Fun': '👀'}
@@ -39,6 +40,7 @@ class Help(commands.Cog):
             embed.add_field(name="Links", value=links, inline=False)
 
             await ctx.send(embed=embed)
+            return
 
         try:
             commands = cog_dict[cog_name]

@@ -9,12 +9,47 @@ from googleapiclient.discovery import build
 from decouple import config
 from num2words import num2words
 from utilities import help_embed
+from discord_slash.cog_ext import cog_slash
 
 key = 'https://meme-api.herokuapp.com/gimme/'
 
 class Fun(commands.Cog):
     def __init__(self, bot):
         self.client = bot
+
+    @commands.command(name="poll", description='Creates a poll')
+    async def poll(self, ctx, question=None, choice_a=None, choice_b=None, choice_c="", choice_d="", choice_e="", choice_f="", choice_g=""):
+        arg = 0
+        # Emoji List
+        if question == None or choice_a == None or choice_b == None:
+            arg = None
+
+        if await help_embed(ctx.channel, "poll \"<question>\" \"<choice_a>\" \"<choice_b>\" .......", arg):
+            return
+        emojis = ["\N{REGIONAL INDICATOR SYMBOL LETTER A}",
+                "\N{REGIONAL INDICATOR SYMBOL LETTER B}",
+                "\N{REGIONAL INDICATOR SYMBOL LETTER C}",
+                "\N{REGIONAL INDICATOR SYMBOL LETTER D}",
+                "\N{REGIONAL INDICATOR SYMBOL LETTER E}", 
+                "\N{REGIONAL INDICATOR SYMBOL LETTER F}",
+                "\N{REGIONAL INDICATOR SYMBOL LETTER G}"]
+
+        choices_list = [choice_a, choice_b, choice_c , choice_d, choice_e, choice_f, choice_g]
+        emoji_count = 0 
+        final_str = ""
+        for i in range(len(choices_list)):
+            if choices_list[i] != "":
+                final_str += f"{emojis[i]} {choices_list[i]}\n"
+                emoji_count += 1
+        # Create Embed
+        embed = discord.Embed(description=final_str, color=ctx.author.color).set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
+
+
+        msg = await ctx.send(f"**{question}**", embed=embed)
+
+        # Add Reactions
+        for emoji in emojis[:emoji_count]:
+            await msg.add_reaction(emoji)
 
 #### Command for Memes
 
@@ -28,8 +63,8 @@ class Fun(commands.Cog):
 
 #### Command for Wallpapers
 
-    @commands.command(aliases=["wallpaper"])
-    async def w(self, ctx, *query):
+    @commands.command(aliases=["w"])
+    async def wallpaper(self, ctx, *query):
         if await help_embed(ctx.channel, "wallpaper <character_name>", query):
             return
         query = ' '.join(query)

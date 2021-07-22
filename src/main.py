@@ -19,37 +19,6 @@ client = commands.Bot(command_prefix=get_prefix, intents=intents, help_command=N
 slash = SlashCommand(client, sync_commands=True)
 
 
-@slash.slash(name="poll", description='Creates a poll')
-async def poll(ctx, question, choice_a, choice_b, choice_c="", choice_d="", choice_e="", choice_f="", choice_g=""):
-    # Emoji List
-    emojis = ["\N{REGIONAL INDICATOR SYMBOL LETTER A}",
-            "\N{REGIONAL INDICATOR SYMBOL LETTER B}",
-            "\N{REGIONAL INDICATOR SYMBOL LETTER C}",
-            "\N{REGIONAL INDICATOR SYMBOL LETTER D}",
-            "\N{REGIONAL INDICATOR SYMBOL LETTER E}", 
-            "\N{REGIONAL INDICATOR SYMBOL LETTER F}",
-            "\N{REGIONAL INDICATOR SYMBOL LETTER G}"]
-
-    choices_list = [choice_a, choice_b, choice_c , choice_d, choice_e, choice_f, choice_g]
-    emoji_count = 0 
-    final_str = ""
-    for i in range(len(choices_list)):
-        if choices_list[i] != "":
-            final_str += f"{emojis[i]} {choices_list[i]}\n"
-            emoji_count += 1
-    # Create Embed
-    embed = discord.Embed(description=final_str, color=ctx.author.color).set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
-
-
-    msg = await ctx.send(f"**{question}**", embed=embed)
-
-    # Add Reactions
-    for emoji in emojis[:emoji_count]:
-        await msg.add_reaction(emoji)
-
-
-
-
 @client.event
 async def on_ready():
     print("Bot is ready")
