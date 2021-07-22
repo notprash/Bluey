@@ -8,7 +8,8 @@ class Help(commands.Cog):
 
 
     @commands.command(name='help', description="The help command")
-    async def help(self, ctx, cog_name=None):
+    async def help(self, ctx, cog_name: str=None):
+        cog_name = cog_name.capitalize()
         cogs_names = self.client.cogs.keys()
         cog_dict = {}
         cog_emojis = {"Admin": "🔒", "Levels": '🥳', "Moderation": '🕵️', 'Music': '💿', 'Animal': '💿', 'Fun': '👀'}
@@ -22,7 +23,7 @@ class Help(commands.Cog):
 
         if cog_name == None:
         
-            embed = discord.Embed(title="Bluey's Command list", description="Thanks for using bluey. We will be adding new features bluey every now and then")
+            embed = discord.Embed(title="Bluey's Command list", description="Thanks for using bluey. We will be adding new features to bluey every now and then")
             embed.set_thumbnail(url=self.client.user.avatar_url)
             embed.add_field(name="🔒Admin", value=f"`{prefix}help Admin`")
             embed.add_field(name="🥳 Levels", value=f"`{prefix}help Levels`")
@@ -30,8 +31,12 @@ class Help(commands.Cog):
             embed.add_field(name="💿 Music", value=f"`{prefix}help Music`")
             embed.add_field(name="🐶 Animal", value=f"`{prefix}help Animal`")
             embed.add_field(name="👀 Fun", value=f"`{prefix}help Fun`")
+            embed.add_field(name="Milestones", value=f"`{prefix}help Milestones`")
             embed.add_field(name="Anime", value=f"`{prefix}help Anime`")
-            embed.add_field(name="Notifier", value=f"`{prefix}help Notifier`", inline=False)
+            embed.add_field(name="Notifier", value=f"`{prefix}help Notifier`")
+            
+            links = "[Invite](https://discord.com/api/oauth2/authorize?client_id=823908962428387338&permissions=8&scope=bot%20applications.commands)"
+            embed.add_field(name="Links", value=links, inline=False)
 
             await ctx.send(embed=embed)
 
