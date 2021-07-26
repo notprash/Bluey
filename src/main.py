@@ -6,6 +6,7 @@ from PIL import Image, ImageDraw, ImageOps, ImageFont
 from discord_slash import SlashCommand
 import sqlite3
 import os
+from discord_components import DiscordComponents
 
 def get_prefix(client, msg):
     # get prefix
@@ -22,6 +23,7 @@ slash = SlashCommand(client, sync_commands=True)
 @client.event
 async def on_ready():
     print("Bot is ready")
+    DiscordComponents(client)
 
     # Changes Bot Status
     await client.change_presence(activity=discord.Activity(type=discord.ActivityType.playing, name=" !help"))

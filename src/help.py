@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 from utilities import read_database
+from discord_components import DiscordComponents, Button, ButtonStyle
 
 class Help(commands.Cog):
     def __init__(self, bot):
@@ -35,10 +36,11 @@ class Help(commands.Cog):
             embed.add_field(name="Milestones", value=f"`{prefix}help Milestones`")
             embed.add_field(name="Anime", value=f"`{prefix}help Anime`")
             
-            links = "[Invite](https://discord.com/api/oauth2/authorize?client_id=823908962428387338&permissions=8&scope=bot%20applications.commands)"
-            embed.add_field(name="Links", value=links, inline=False)
+            # links = "[Invite](https://discord.com/api/oauth2/authorize?client_id=823908962428387338&permissions=8&scope=bot%20applications.commands)"
+            # embed.add_field(name="Links", value=links, inline=False)
 
-            await ctx.send(embed=embed)
+            components = [Button(style=ButtonStyle.URL, label="Invite", url='https://discord.com/api/oauth2/authorize?client_id=823908962428387338&permissions=8&scope=bot%20applications.commands')]
+            await ctx.send(embed=embed, components=components)
             return
 
         try:
