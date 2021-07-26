@@ -228,6 +228,8 @@ class Levels(commands.Cog):
         await ctx.send(embed=embed)
 
     def check_if_level_up_role(self, level, guildid):
+        if level == None:
+            return
         with sql.connect('db.sqlite3') as db:
             try:
                 cursor = db.execute(f"SELECT * FROM Levelups WHERE guildId = {guildid}")

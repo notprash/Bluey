@@ -2,143 +2,186 @@ from discord.ext import commands
 from youtube_dl import YoutubeDL
 import discord
 from utilities import help_embed
+import wavelink
+
+class QueueIsEmpty(commands.CommandError):
+    pass
+
+class Queue:
+    def __init__(self):
+        self.__queue = []
+        self.position = 0
+
+    def empty(self):
+        return not self.__queue
+    def first_track(self):
+        return self.__queue[0]
+
+    def add(self, track):
+        self.__queue.append(track)
 
 
-class Music(commands.Cog):
+    @property
+    def current_track(self):
+        if self.empty():
+            raise QueueIsEmpty
+
+        if self.position < len(self.__queue):
+            return self.__queue[self.position]
+            
+            
+
+    def get_next_track(self):
+        if self.empty():
+            raise QueueIsEmpty
+
+        if self.position + 1 < len(self.__queue):
+            self.position += 1
+            return self.__queue[self.position]
+
+
+    @property
+    def clear(self):
+        self.__queue = []
+        self.position = 0
+
+    @property
+    def upcoming(self):
+        return self.__queue[self.position + 1:]
+
+    
+    @property
+    def previous(self):
+        return self.__queue[self.position - 1]
+
+
+
+
+class Player(wavelink.Player):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.queue = Queue()
+
+
+    async def add_tracks(self, ctx, tracks):
+        self.queue.add(tracks)
+
+        await ctx.send(f"Added **{tracks.title}** to the Queue")
+
+        if not self.is_playing and not self.queue.empty():
+            await self.start_playback()
+
+    async def start_playback(self):
+        await self.play(self.queue.current_track)
+
+    async def advance(self):
+        next_track = self.queue.get_next_track()
+        if not next_track:
+            return
+        await self.play(next_track)
+
+
+    async def player_disconnect(self):
+        try:
+            await self.destroy()
+        except:
+            pass
+
+
+
+class Music(commands.Cog, wavelink.WavelinkMixin):
     def __init__(self, bot):
         self.client = bot
-        self.music_queue = []
-        self.is_playing = False
-        self.FFMPEG_OPTIONS = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'}
-        self.vc = ""
-        self.current_song = None
+        self.wavelink = wavelink.Client(bot=bot)
+        self.client.loop.create_task(self.start_nodes())
 
+    @commands.Cog.listener()
+    async def on_voice_state_update(self, member, before, after):
+        if not member.bot and after.channel is None:
+            if not [m for m in before.channel.members if not m.bot]:
+                await self.get_player(member.guild).player_disconnect()
 
-    def search_song(self, song_name):
-        with YoutubeDL() as ydl:
-            try: 
-                info = ydl.extract_info("ytsearch:%s" % song_name, download=False)['entries'][0]
-            except Exception: 
-                return False
+    @wavelink.WavelinkMixin.listener()
+    async def on_node_ready(self, node: wavelink.Node):
+        print(f"{node.identifier} is ready")
 
+    @wavelink.WavelinkMixin.listener('on_track_end')
+    @wavelink.WavelinkMixin.listener('on_track_stuck')
+    @wavelink.WavelinkMixin.listener('on_track_expection')
+    async def on_player_stop(self, node, payload):
+        try:
+            await payload.player.advance()
+        except:
+            pass 
 
-        return {'source': info['formats'][0]['url'], 'title': info['title']}
-        
     
-    async def play_music(self):
-        if len(self.music_queue) > 0:
-            self.is_playing = True
+    async def start_nodes(self):
+        await self.client.wait_until_ready()
 
-            m_url = self.music_queue[0][0]['source']
-            
-            #try to connect to voice channel if you are not already connected
-
-            if self.vc == "" or not self.vc.is_connected() or self.vc == None:
-                self.vc = await self.music_queue[0][1].connect()
-            else:
-                await self.vc.move_to(self.music_queue[0][1])
-            
-            #remove the first element as you are currently playing it
-            self.current_song = self.music_queue.pop(0)
-            self.current_song = self.current_song[0]['title']
-
-            self.vc.play(discord.FFmpegPCMAudio(m_url, **self.FFMPEG_OPTIONS), after=lambda e: self.play_next())
-        else:
-            self.is_playing = False
-
-
-    def play_next(self):
-        if len(self.music_queue) > 0:
-            self.is_playing = True
-
-            #get the first url
-            m_url = self.music_queue[0][0]['source']
-
-            #remove the first element as you are currently playing it
-            self.music_queue.pop(0)
-
-            self.vc.play(discord.FFmpegPCMAudio(m_url, **self.FFMPEG_OPTIONS), after=lambda e: self.play_next())
-        else:
-            self.is_playing = False
-        
-
-
-
-    @commands.command(aliases=['p'])
-    async def play(self, ctx, *song_name):
-        query = " ".join(song_name)
-
-        if await help_embed(ctx.channel, "play <song_name>", song_name):
-            return
-        
-        try: 
-            voice_channel = ctx.author.voice.channel
-        except Exception:
-            voice_channel = None
-        if voice_channel == None:
-            #you need to be connected so that the bot knows where to go
-            await ctx.send("🚫 Connect to a voice channel!")
-        else:
-            msg = await ctx.send('🕐 `Searching.....`')
-            song = self.search_song(query)
-            await msg.edit(content=f"🎵 **{song['title']}** Added to the Queue")
-            self.music_queue.append([song, voice_channel, ctx.author])
-                
-            if self.is_playing == False:
-                await self.play_music()
+        await self.wavelink.initiate_node(host='127.0.0.1',
+                                              port=2333,
+                                              rest_uri='http://127.0.0.1:2333',
+                                              password='youshallnotpass',
+                                              identifier='MAIN',
+                                              region='us_central')
+    
+    def get_player(self, ctx: commands.Context):
+        return self.wavelink.get_player(ctx.guild.id, cls=Player, context=ctx)
 
 
     @commands.command()
     async def skip(self, ctx):
-        if self.vc != "" and self.vc:
-            self.vc.stop()
-            await self.play_music()
-
-    @commands.command()
-    async def stop(self, ctx):
-        for x in self.client.voice_clients:
-            if(x.guild == ctx.message.guild):
-                self.music_queue = []
-                await x.disconnect()
-                embed = discord.Embed(description="Cleared the music queue", color=discord.Color.red())
-                return await ctx.send(embed=embed)
+        player = self.get_player(ctx) 
+        previous = player.queue.previous
+        await player.advance()
+        await ctx.send(f"Skipped {previous}")
 
 
-        return await ctx.send("I am not connected to any voice channel on this server!")
-
-
-    @commands.command()
-    async def jump(self, ctx, index: int=None):
-        if await help_embed(ctx.channel, "jump <song_index>", index):
+    @commands.command(name='play', description="Plays a song", aliases=['p'])
+    async def play(self, ctx, *song_name):
+        if len(song_name) == 0:
             return
-        if len(self.music_queue) > 0:
-            self.is_playing = True
+        song_name = ' '.join(song_name)
+        tracks = await self.wavelink.get_tracks(f'ytsearch: {song_name}')
+        player = self.get_player(ctx)
+        try:
+            channel = ctx.author.voice.channel
+        except Exception:
+            await ctx.send("Please join a voice channel")
+            return
 
-            #get the first url
-            m_url = self.music_queue[index - 1][0]['source']
-            self.music_queue = self.music_queue[index - 1: ]
+        if not player.is_connected:
+            await player.connect(channel.id)
 
-            #remove the first element as you are currently playing it
-
-            self.vc.stop()
-            self.vc.play(discord.FFmpegPCMAudio(m_url, **self.FFMPEG_OPTIONS), after=lambda e: self.play_next())
-        else:
-            self.is_playing = False
+        await player.add_tracks(ctx, tracks[0])
 
 
-
-    @commands.command()
+    @commands.command(name='queue', description='Return in the songs in queue', aliases=['q'])
     async def queue(self, ctx):
-        str = ""
-        i = 1
-        for song in self.music_queue:
-            print(self.music_queue)
-            song_name = f"[{i}] 🎵 {song[0]['title']} - {song[2].mention}\n"
-            str += song_name
-            i += 1
-        embed = discord.Embed(title=f"Z Queue | {len(self.music_queue)} songs added", description=str, color=ctx.author.color)
-        await ctx.send(f"▶️ **{self.current_song}**", embed=embed)
+        player = self.get_player(ctx)
+        upcoming = self.get_player(ctx).queue.upcoming
+        current_track = self.get_player(ctx).queue.current_track
+        current_track_title = '%.41s' % current_track + '...'
+        description = ''
+        for track in upcoming:
+            track_title = track.title
+            if len(track_title) > 41:
+                track_title = '%.41s' % track + '..'
+            description += f"{track_title} **({track.duration // 60000} min)**\n"
+        embed = discord.Embed(color=ctx.author.color, description=description).set_author(name=current_track_title, icon_url=current_track.thumb)
+        embed.set_footer(text=ctx.author.name, icon_url=ctx.author.avatar_url)
+        embed.set_thumbnail(url=current_track.thumb)
 
+
+        await ctx.send(embed=embed)
+
+
+
+    @commands.command(name='stop', description="Disconnects the bot and clears the queue", aliases=['destroy'])
+    async def stop(self, ctx):
+        player = self.get_player(ctx)
+        await player.player_disconnect()
+        player.queue.clear
 
 def setup(bot):
     bot.add_cog(Music(bot))
