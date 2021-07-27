@@ -57,16 +57,14 @@ class Fun(commands.Cog):
     async def meme(self, ctx, sub = 'memes'):
         data = get(key).json()
         title = data['title']
-        embed = discord.Embed(title=title)
+        embed = discord.Embed(title=title, color = discord.Color.blue())
         embed.set_image(url=data['url'])
         await ctx.send(embed=embed)
 
 #### Command for Wallpapers
 
-    @commands.command(aliases=["w"])
-    async def wallpaper(self, ctx, *query):
-        if await help_embed(ctx.channel, "wallpaper <character_name>", query):
-            return
+    @commands.command()
+    async def w(self, ctx, *query):
         query = ' '.join(query)
         site = get(f'https://www.wallpaperflare.com/search?wallpaper={query}').text
         soup = BeautifulSoup(site, 'lxml')
@@ -82,11 +80,11 @@ class Fun(commands.Cog):
         else:
             wallpaper.pop(0)
             random_wall = random.choice(wallpaper)
-            image = random_wall.contents[1].get('data-src') 
+            image = random_wall.contents[1].get('data-src')
             webpage = random_wall.get('href')
 
             description = f"[Wallpaper Link]({webpage})"
-            emb = discord.Embed(title = query, description = description)
+            emb = discord.Embed(title = query, description = description, color = discord.Color.blue())
             emb.set_image(url = image)
             await ctx.send(embed = emb)
 
