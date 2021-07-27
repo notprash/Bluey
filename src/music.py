@@ -1,7 +1,8 @@
+from os import read
 from discord.ext import commands
 from youtube_dl import YoutubeDL
 import discord
-from utilities import help_embed
+from utilities import help_embed, read_database
 import wavelink
 
 class QueueIsEmpty(commands.CommandError):
@@ -182,6 +183,57 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
         player = self.get_player(ctx)
         await player.player_disconnect()
         player.queue.clear
+
+    
+    @commands.command(name='volume', description='Changes the volume of the player', aliases=['vol'])
+    async def volume(self, ctx, value=None): 
+        prefix = read_database(ctx.guild.id)[8]
+        try:
+            value = int(value)
+        except:
+            return await ctx.send("😮‍💨 The volume value must be integer")
+
+        player = self.get_player(ctx)
+        player_volume = player.volume
+        if value == player_volume:
+            return await ctx.send(f"🙄 Volume is already set to {value}")
+
+        if not value:
+            embed = discord.Embed(title="Volume info", description=f'Current player volume is {player_volume}')
+            embed.add_field(name='Help', value=f'`{prefix}volume <volume>`')
+            embed.set_footer(text=ctx.author.name, icon_url=ctx.author.avatar_url)
+            return await ctx.send(embed=embed)
+
+        if value > 100:
+            return await ctx.send("The volume is too high")
+        elif value < 0:
+            return await ctx.send("The volume is too low")
+
+
+        await player.set_volume(value)
+        await ctx.send(f"🔊 volume set to *{value}*")
+
+    
+    @commands.command(name='pause', description='Pauses the track')
+    async def pause(self, ctx):
+        prefix = read_database(ctx.guild.id)[8]
+        player = self.get_player(ctx)
+        if player.is_paused:
+            return await ctx.send(f"The player is already paused. Try using `{prefix}resume` for resuming the track")
+
+        await player.set_pause(True)
+        current_track = player.queue.current_track
+        await ctx.send(f"Paused **{current_track}** ")
+
+    @commands.command(name='resume', description='Resumes the track', aliases=['unpause'])
+    async def resume(self, ctx):
+        player = self.get_player(ctx)
+        if not player.is_paused:
+            return await ctx.send("The player is already playing")
+
+        await player.set_pause(False)
+        current_track = player.queue.current_track
+        await ctx.send(f"Resumed **{current_track}** ")
 
 def setup(bot):
     bot.add_cog(Music(bot))
