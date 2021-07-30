@@ -148,7 +148,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
         try:
             channel = ctx.author.voice.channel
         except Exception:
-            await ctx.send("Please join a voice channel")
+            await ctx.send("<:error:870673057495261184> Connect to a voice channel!")
             return
 
         if not player.is_connected:

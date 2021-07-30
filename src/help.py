@@ -14,7 +14,7 @@ class Help(commands.Cog):
             cog_name = cog_name.capitalize()
         cogs_names = self.client.cogs.keys()
         cog_dict = {}
-        cog_emojis = {"Admin": "🔒", "Levels": '🥳', "Moderation": '🕵️', 'Music': '💿', 'Animal': '💿', 'Fun': '👀'}
+        cog_emojis = {"Admin": "🔒", "Levels": '🥳', "Moderation": '🕵️', 'Music': '💿', 'Animal': '💿', 'Fun': '👀', "Games": '🎲'}
         prefix = read_database(ctx.guild.id)[8]
         for cogs in cogs_names:
             commands = []
@@ -33,6 +33,7 @@ class Help(commands.Cog):
             embed.add_field(name="💿 Music", value=f"`{prefix}help Music`")
             embed.add_field(name="🐶 Animal", value=f"`{prefix}help Animal`")
             embed.add_field(name="👀 Fun", value=f"`{prefix}help Fun`")
+            embed.add_field(name="🎲 Games", value=f"`{prefix}help Games`")
             embed.add_field(name="Milestones", value=f"`{prefix}help Milestones`")
             embed.add_field(name="Anime", value=f"`{prefix}help Anime`")
             

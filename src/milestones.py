@@ -35,6 +35,10 @@ class Milestones(commands.Cog):
                         pass
                     await channel.send(embed=embed)
 
+            
+            
+            db.commit()
+
 
     @commands.command()
     @has_admin_permissions()

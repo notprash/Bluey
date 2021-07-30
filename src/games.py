@@ -4,7 +4,7 @@ from discord.ext import commands
 import random
 
 # words = ['mute', 'ban', 'user', 'discord', 'role', 'nickname', 'testing', 'zoey', 'prash', 'emperor', 'game', 'meme', 'anime']
-with open("words.txt", "r") as file:
+with open("config/words.txt", "r") as file:
     allText = file.read()
     words = list(map(str, allText.split()))
 
