@@ -51,9 +51,18 @@ class Queue:
         return self.__queue[self.position + 1:]
 
     
-    @property
-    def previous(self):
+    def previous(self, set=False):
+        if set:
+            self.position -= 2
+            print(self.position)
+            return self.__queue[self.position]
+        print(self.position)
         return self.__queue[self.position - 1]
+
+    @property
+    def whole_queue(self):
+        return self.__queue
+
 
 
 
@@ -107,8 +116,6 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
         print(f"{node.identifier} is ready")
 
     @wavelink.WavelinkMixin.listener('on_track_end')
-    @wavelink.WavelinkMixin.listener('on_track_stuck')
-    @wavelink.WavelinkMixin.listener('on_track_expection')
     async def on_player_stop(self, node, payload):
         try:
             await payload.player.advance()
@@ -133,7 +140,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
     @commands.command()
     async def skip(self, ctx):
         player = self.get_player(ctx) 
-        previous = player.queue.previous
+        previous = player.queue.current_track
         await player.advance()
         await ctx.send(f"Skipped {previous}")
 
@@ -212,6 +219,13 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
 
         await player.set_volume(value)
         await ctx.send(f"🔊 volume set to *{value}*")
+
+    @commands.command(name='back', description="Moves back to the previous track", aliases=['prev', 'previous'])
+    async def back(self, ctx):
+        player = self.get_player(ctx)
+        song = player.queue.previous(set=True)
+        print(song)
+        await player.stop()
 
     
     @commands.command(name='pause', description='Pauses the track')
