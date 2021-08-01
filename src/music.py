@@ -54,9 +54,7 @@ class Queue:
     def previous(self, set=False):
         if set:
             self.position -= 2
-            print(self.position)
             return self.__queue[self.position]
-        print(self.position)
         return self.__queue[self.position - 1]
 
     @property
@@ -167,8 +165,8 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
     @commands.command(name='queue', description='Return in the songs in queue', aliases=['q'])
     async def queue(self, ctx):
         player = self.get_player(ctx)
-        upcoming = self.get_player(ctx).queue.upcoming
-        current_track = self.get_player(ctx).queue.current_track
+        upcoming = player.queue.upcoming
+        current_track = player.queue.current_track
         current_track_title = '%.41s' % current_track + '...'
         description = ''
         for track in upcoming:
@@ -176,7 +174,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
             if len(track_title) > 41:
                 track_title = '%.41s' % track + '..'
             description += f"{track_title} **({track.duration // 60000} min)**\n"
-        embed = discord.Embed(color=ctx.author.color, description=description).set_author(name=current_track_title, icon_url=current_track.thumb)
+        embed = discord.Embed(color=ctx.author.color, description=description).set_author(name=current_track_title, icon_url=self.client.user.avatar_url)
         embed.set_footer(text=ctx.author.name, icon_url=ctx.author.avatar_url)
         embed.set_thumbnail(url=current_track.thumb)
 
@@ -224,8 +222,16 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
     async def back(self, ctx):
         player = self.get_player(ctx)
         song = player.queue.previous(set=True)
-        print(song)
         await player.stop()
+        await ctx.send(f"◀️  Moving back to **{song}**")
+
+    @commands.command(name='repeat', description='Replays the current track', aliases=['replay'])
+    async def repeat(self, ctx):
+        player = self.get_player(ctx)
+        song_name = player.queue.previous()
+        await player.start_playback()
+        await ctx.send(f"🔁 Replaying **{song_name}**")
+
 
     
     @commands.command(name='pause', description='Pauses the track')
