@@ -262,7 +262,7 @@ class Levels(commands.Cog):
         # Value 0 == No level up channel
         levelup_channel = read_database(message.guild.id)[6]
 
-        xp += random.randint(5, 50)
+        xp += random.randint(5, 70)
 
         if self.calculate_lvl(xp) > level and levelup_channel == 0:
             level += 1
@@ -323,7 +323,7 @@ class Levels(commands.Cog):
     @commands.command()
     @has_admin_permissions()
     async def noxpchannel(self, ctx, type=None, channel: discord.TextChannel=None):
-        arg = None
+        arg = 0
         if type == None or channel == None:
             arg = None
         if await help_embed(ctx.channel, "noxpchannel add <#channel>\n>noxpchannel remove <#channel>", arg):

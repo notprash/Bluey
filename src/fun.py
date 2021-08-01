@@ -63,8 +63,8 @@ class Fun(commands.Cog):
 
 #### Command for Wallpapers
 
-    @commands.command()
-    async def w(self, ctx, *query):
+    @commands.command(aliases=['w'])
+    async def wallpaper(self, ctx, *query):
         query = ' '.join(query)
         site = get(f'https://www.wallpaperflare.com/search?wallpaper={query}').text
         soup = BeautifulSoup(site, 'lxml')
@@ -103,7 +103,7 @@ class Fun(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.command()
+    @commands.command(aliases=['server'])
     async def stats(self, ctx):
         # Settings Embed Color
         color = discord.Color.blue()
@@ -129,7 +129,7 @@ class Fun(commands.Cog):
 
 
         await ctx.send(embed=embed)
-    @commands.command()
+    @commands.command(aliases=['ytstats'])
     async def youtubestats(self, ctx, channelId=None):
         if await help_embed(ctx.channel, "youtubestats <channelId>", channelId):
             return
