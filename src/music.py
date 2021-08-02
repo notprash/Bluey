@@ -1,4 +1,5 @@
 from os import read
+import sqlite3
 from discord.ext import commands
 from youtube_dl import YoutubeDL
 import discord
@@ -254,6 +255,57 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
         await player.set_pause(False)
         current_track = player.queue.current_track
         await ctx.send(f"Resumed **{current_track}** ")
+
+
+
+    # Likes songs
+    @commands.command(name='like', description='Likes the current song', aliases=['fav'])
+    async def like(self, ctx):
+        with sqlite3.connect('db.sqlite3') as db:
+            try:
+                db.execute("CREATE TABLE Liked (user int, songname TEXT)")
+                db.commit()
+            except:
+                pass
+
+            player = self.get_player(ctx)
+            current_track = player.queue.current_track.title
+            song = db.execute("SELECT songname FROM Liked WHERE user = ? AND songname = ?", (ctx.author.id, current_track)).fetchone()
+            if song != None:
+                embed = discord.Embed(description='Song already added to your liked songs', color=discord.Color.red())
+                return await ctx.send(embed=embed)
+
+            db.execute("INSERT INTO Liked VALUES(?, ?)", (ctx.author.id, current_track))
+            db.commit()
+            embed = discord.Embed(description=f"❤️ Added {current_track} to your liked songs", color=discord.Color.green())
+            await ctx.send(embed=embed)
+
+
+    @commands.command(name='likedsongs', description='Lists the liked songs', aliases=['liked', 'favsongs'])
+    async def likedsongs(self, ctx, member: discord.Member=None):
+        member = member or ctx.author
+
+        with sqlite3.connect('db.sqlite3') as db:
+            songs = db.execute(f'SELECT songname FROM Liked WHERE user = {member.id}').fetchall()
+            description = ""
+            if songs == []:
+                embed = discord.Embed(description=f"{member} does not have any liked songs", color=discord.Color.red())
+                return await ctx.send(embed=embed)
+                
+
+            i = 0
+
+            for song in songs:
+                i += 1
+                song = song[0]
+                description += f"{i}. {song}\n"
+
+            embed = discord.Embed(description=description, color=ctx.author.color)
+            embed.set_author(name=f"{member}'s Liked Songs", icon_url=member.avatar_url)
+            embed.set_footer(text=ctx.author, icon_url=ctx.author.avatar_url)
+            await ctx.send(embed=embed)
+
+        
 
 def setup(bot):
     bot.add_cog(Music(bot))
