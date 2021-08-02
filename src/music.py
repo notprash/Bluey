@@ -309,6 +309,20 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
             embed.set_footer(text=ctx.author, icon_url=ctx.author.avatar_url)
             await ctx.send(embed=embed)
 
+
+    @commands.command(name='bassboost', description='Increases the bass sound')
+    async def bassboost(self, ctx, args=None):
+        player = self.get_player(ctx)
+        eq = wavelink.Equalizer.boost()
+        song = player.queue.current_track
+        if args == 'reset':
+            eq = wavelink.Equalizer.flat()
+            embed = discord.Embed(description="Removed all the effects on the player", color=discord.Color.green())
+            await ctx.send(embed=embed)
+            return await player.set_eq(eq)
+        await player.set_eq(eq)
+        await ctx.send(f"Bassboosted **{song}**")
+
         
 
 def setup(bot):
