@@ -132,8 +132,12 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
                                               identifier='MAIN',
                                               region='us_central')
     
-    def get_player(self, ctx: commands.Context):
-        return self.wavelink.get_player(ctx.guild.id, cls=Player, context=ctx)
+    def get_player(self, ctx):
+        if isinstance(ctx, commands.Context):
+            return self.wavelink.get_player(ctx.guild.id, cls=Player, context=ctx)
+
+        elif isinstance(ctx, discord.Guild):
+            return self.wavelink.get_player(ctx.id, cls=Player, context=ctx)
 
 
     @commands.command()

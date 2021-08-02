@@ -236,6 +236,8 @@ class Levels(commands.Cog):
             except:
                 return False
             values = cursor.fetchone()
+            if values == None:
+                return False
             if values[2] == level:
                 return values[1] 
 
