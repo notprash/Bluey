@@ -12,6 +12,13 @@ class Levels(commands.Cog):
     def __init__(self, bot):
         self.client = bot
 
+    def enabled(self, guild):
+        return bool(read_database(guild)[9])
+    
+    async def disabled_msg(self, ctx):
+        embed = discord.Embed(description="Levels is disabled. Please enable it to use this", color=discord.Color.red())
+        return await ctx.send(embed=embed)
+
     def find_or_insert_user(self, member: discord.Member):
         with sql.connect('db.sqlite3') as cursor:
             try: 
@@ -31,6 +38,21 @@ class Levels(commands.Cog):
                 cursor.commit()
 
         return result
+    def check_if_level_up_role(self, level, guildid):
+        if level == None:
+            return
+        with sql.connect('db.sqlite3') as db:
+            try:
+                cursor = db.execute(f"SELECT * FROM Levelups WHERE guildId = {guildid}")
+            except:
+                return False
+            values = cursor.fetchone()
+            if values == None:
+                return False
+            if values[2] == level:
+                return values[1] 
+
+        return False
 
 
     def check_if_xp_blocked(self, channel: discord.TextChannel, guild):
@@ -162,6 +184,8 @@ class Levels(commands.Cog):
 
     @commands.command()
     async def rank(self, ctx, member : discord.Member=None):
+        if not self.enabled(ctx.guild.id):
+            return await self.disabled_msg(ctx)
         member = member or ctx.author
         await member.avatar_url.save('avatar.jpg')
         await member.guild.icon_url.save('1.jpg')
@@ -184,7 +208,9 @@ class Levels(commands.Cog):
        
 
     @commands.command()
-    async def top(self, ctx ):
+    async def top(self, ctx):
+        if not self.enabled(ctx.guild.id):
+            return await self.disabled_msg(ctx)
         with sql.connect("db.sqlite3") as db:
             cursor = db.execute(f'SELECT user, xp, level FROM Levels WHERE Guild = {ctx.guild.id} ORDER BY xp DESC ')
             data = cursor.fetchall()
@@ -210,6 +236,8 @@ class Levels(commands.Cog):
     @commands.command()
     @commands.has_permissions(administrator=True)
     async def setlvl(self, ctx, member: discord.Member=None, lvl: int=None):
+        if not self.enabled(ctx.guild.id):
+            return await self.disabled_msg(ctx)
         if member == None or lvl == None:
             arg = None
         if await help_embed(ctx.channel, "setlvl <@member> <lvl>", arg):
@@ -227,25 +255,125 @@ class Levels(commands.Cog):
         embed = discord.Embed(description=f"Level set {level} for {member.mention}", color=color)
         await ctx.send(embed=embed)
 
-    def check_if_level_up_role(self, level, guildid):
-        if level == None:
+
+
+
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def levelup(self, ctx, type=None, channel: discord.TextChannel=None):
+        if not self.enabled(ctx.guild.id):
+            return await self.disabled_msg(ctx)
+        if await help_embed(ctx.channel, "levelup channel <#channel>\n>levelup default", type):
+            return
+        if type == 'channel':
+            update_database("Settings", 'levelup', channel.id, 'guildId', ctx.guild.id)
+            embed = discord.Embed(description=f"Now {channel.mention} will recieve level up notifications", color=discord.Color.green())
+            await ctx.send(embed=embed)
+
+        elif type == "default":
+            update_database("Settings", 'levelup', 0, 'guildId', ctx.guild.id)
+            await ctx.send("✅ Restored defaults")
+
+
+    @commands.command()
+    @commands.has_permissions(kick_members=True, ban_members=True)
+    async def xpblock(self, ctx, member: discord.Member=None):
+        if not self.enabled(ctx.guild.id):
+            return await self.disabled_msg(ctx)
+        if await help_embed(ctx.channel, "xpblock <@member>", member):
+            return
+        role = discord.utils.get(ctx.guild.roles, name="[xp blocked]")
+        if role == None:
+            role = await ctx.guild.create_role(name="[xp blocked]")
+            await ctx.send(f"Xp blocked {member.mention}")
+            return await member.add_roles(role)
+
+        await ctx.send(f"Xp blocked {member.mention}")
+        return await member.add_roles(role)
+        # member.add_roles(roles=)
+
+    @commands.command()
+    @has_admin_permissions()
+    async def noxpchannel(self, ctx, type=None, channel: discord.TextChannel=None):
+        if not self.enabled(ctx.guild.id):
+            return await self.disabled_msg(ctx)
+        arg = 0
+        if type == None or channel == None:
+            arg = None
+        if await help_embed(ctx.channel, "noxpchannel add <#channel>\n>noxpchannel remove <#channel>", arg):
+            return
+        with sql.connect("db.sqlite3") as db:
+            try:
+                db.execute("CREATE TABLE Noxp (guildId int, channel int PRIMARY KEY)")
+                db.commit()
+            except:
+                pass
+
+            if type == 'add':
+                try:
+                    db.execute("INSERT INTO Noxp VALUES(?, ?)", (ctx.guild.id, channel.id))
+                    db.commit()
+                    await ctx.send(f"✅ {channel.mention} is now xp blocked channel")
+                except:
+                    await ctx.send(f"🔴 {channel.mention} already added")
+
+            elif type == 'remove':
+                try:
+                    db.execute(f"DELETE FROM Noxp WHERE guildId = {ctx.guild.id} AND channel = {channel.id}")
+                    db.commit()
+                    await ctx.send(f"✅ {channel.mention} is not xp blocked anymore")
+                except:
+                    await ctx.send(f"🔴 {channel.mention} channel is not added")
+
+
+    @commands.command()
+    @has_admin_permissions()
+    async def giverole(self, ctx, type=None, *args):
+        if not self.enabled(ctx.guild.id):
+            return await self.disabled_msg(ctx)
+        if await help_embed(ctx.channel, "giverole add <lvl> <@role>\n>giverole remove <@role>\n>giverole list", type):
             return
         with sql.connect('db.sqlite3') as db:
             try:
-                cursor = db.execute(f"SELECT * FROM Levelups WHERE guildId = {guildid}")
+                db.execute("CREATE TABLE Levelups (guildId int, roleId int PRIMARY KEY, level int)")
             except:
-                return False
-            values = cursor.fetchone()
-            if values == None:
-                return False
-            if values[2] == level:
-                return values[1] 
+                print("Table Exists")
 
-        return False
+            if type == 'add' and args != []:
+                try:
+                    role = ctx.guild.get_role(int(args[1][3:-1]))
+                    level = int(args[0])
+                    cursor = db.execute(f"INSERT INTO Levelups VALUES(?, ?, ?)", (ctx.guild.id, role.id, level))
+                    db.commit()
+                    await ctx.send(f"User will recieve {role.mention} at level {level}")
+                except:
+                    await ctx.send("Role already added")
+            
+            elif type == 'remove' and args != []:
+                role = ctx.guild.get_role(int(args[0][3:-1]))
+                try: 
+                    db.execute("DELETE FROM Levelups WHERE guildId = ? AND roleId = ?", (ctx.guild.id, role.id))
+                    db.commit()
+                    await ctx.send("✅ Role removed")
+                except:
+                    await ctx.send('🔴 Role does not exist')
+            
+            elif type == 'list':
+                values = db.execute(f"SELECT roleId, level FROM Levelups WHERE guildId = {ctx.guild.id}").fetchall()
+                description = ""
+                for value in values:
+                    roleid, level = value
+                    role = discord.utils.get(ctx.guild.roles, id=roleid)
+                    description += f"**{level}** -- {role.mention} \n\n"
 
+                embed = discord.Embed(description=description)
+                embed.set_author(name="Levelup Roles", icon_url=ctx.guild.icon_url)
+                await ctx.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_message(self, message):
+        if not self.enabled(message.guild.id):
+            return 
         role = discord.utils.get(message.guild.roles, name='[xp blocked]')
         if message.author.bot or role in message.author.roles:
             return
@@ -290,115 +418,6 @@ class Levels(commands.Cog):
         with sql.connect('db.sqlite3') as db:
             db.execute(f'Update Levels set xp = {xp}, level = {level} WHERE Guild = {guildid} and user = {userid}')
             db.commit()
-
-
-    @commands.command()
-    @commands.has_permissions(administrator=True)
-    async def levelup(self, ctx, type=None, channel: discord.TextChannel=None):
-        if await help_embed(ctx.channel, "levelup channel <#channel>\n>levelup default", type):
-            return
-        if type == 'channel':
-            update_database("Settings", 'levelup', channel.id, 'guildId', ctx.guild.id)
-            embed = discord.Embed(description=f"Now {channel.mention} will recieve level up notifications", color=discord.Color.green())
-            await ctx.send(embed=embed)
-
-        elif type == "default":
-            update_database("Settings", 'levelup', 0, 'guildId', ctx.guild.id)
-            await ctx.send("✅ Restored defaults")
-
-
-    @commands.command()
-    @commands.has_permissions(kick_members=True, ban_members=True)
-    async def xpblock(self, ctx, member: discord.Member=None):
-        if await help_embed(ctx.channel, "xpblock <@member>", member):
-            return
-        role = discord.utils.get(ctx.guild.roles, name="[xp blocked]")
-        if role == None:
-            role = await ctx.guild.create_role(name="[xp blocked]")
-            await ctx.send(f"Xp blocked {member.mention}")
-            return await member.add_roles(role)
-
-        await ctx.send(f"Xp blocked {member.mention}")
-        return await member.add_roles(role)
-        # member.add_roles(roles=)
-
-    @commands.command()
-    @has_admin_permissions()
-    async def noxpchannel(self, ctx, type=None, channel: discord.TextChannel=None):
-        arg = 0
-        if type == None or channel == None:
-            arg = None
-        if await help_embed(ctx.channel, "noxpchannel add <#channel>\n>noxpchannel remove <#channel>", arg):
-            return
-        with sql.connect("db.sqlite3") as db:
-            try:
-                db.execute("CREATE TABLE Noxp (guildId int, channel int PRIMARY KEY)")
-                db.commit()
-            except:
-                pass
-
-            if type == 'add':
-                try:
-                    db.execute("INSERT INTO Noxp VALUES(?, ?)", (ctx.guild.id, channel.id))
-                    db.commit()
-                    await ctx.send(f"✅ {channel.mention} is now xp blocked channel")
-                except:
-                    await ctx.send(f"🔴 {channel.mention} already added")
-
-            elif type == 'remove':
-                try:
-                    db.execute(f"DELETE FROM Noxp WHERE guildId = {ctx.guild.id} AND channel = {channel.id}")
-                    db.commit()
-                    await ctx.send(f"✅ {channel.mention} is not xp blocked anymore")
-                except:
-                    await ctx.send(f"🔴 {channel.mention} channel is not added")
-
-
-    @commands.command()
-    @has_admin_permissions()
-    async def giverole(self, ctx, type=None, *args):
-        if await help_embed(ctx.channel, "giverole add <lvl> <@role>\n>giverole remove <@role>\n>giverole list", type):
-            return
-        with sql.connect('db.sqlite3') as db:
-            try:
-                db.execute("CREATE TABLE Levelups (guildId int, roleId int PRIMARY KEY, level int)")
-            except:
-                print("Table Exists")
-
-            if type == 'add' and args != []:
-                try:
-                    role = ctx.guild.get_role(int(args[1][3:-1]))
-                    level = int(args[0])
-                    cursor = db.execute(f"INSERT INTO Levelups VALUES(?, ?, ?)", (ctx.guild.id, role.id, level))
-                    db.commit()
-                    await ctx.send(f"User will recieve {role.mention} at level {level}")
-                except:
-                    await ctx.send("Role already added")
-            
-            elif type == 'remove' and args != []:
-                role = ctx.guild.get_role(int(args[0][3:-1]))
-                try: 
-                    db.execute("DELETE FROM Levelups WHERE guildId = ? AND roleId = ?", (ctx.guild.id, role.id))
-                    db.commit()
-                    await ctx.send("✅ Role removed")
-                except:
-                    await ctx.send('🔴 Role does not exist')
-            
-            elif type == 'list':
-                values = db.execute(f"SELECT roleId, level FROM Levelups WHERE guildId = {ctx.guild.id}").fetchall()
-                description = ""
-                for value in values:
-                    roleid, level = value
-                    role = discord.utils.get(ctx.guild.roles, id=roleid)
-                    description += f"**{level}** -- {role.mention} \n\n"
-
-                embed = discord.Embed(description=description)
-                embed.set_author(name="Levelup Roles", icon_url=ctx.guild.icon_url)
-                await ctx.send(embed=embed)
-
-
-
-
 
 def setup(bot):
     bot.add_cog(Levels(bot))

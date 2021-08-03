@@ -12,16 +12,16 @@ class Admin(commands.Cog):
 
 
 
-    async def toggle_msgs(self, ctx, arg, field_name, msg_type):
+    async def toggle_msgs(self, ctx, arg, field_name, msg):
         # Enable welcome/userLeave msg
         if arg.lower() == 'enable':
             update_database('Settings', field_name, True, 'GuildId', ctx.guild.id)
-            await ctx.message.channel.send(f'<a:tick:857439616877199360> {msg_type} Message is enabled')
+            await ctx.send(f"🥳 {msg} was enabled")
 
         # Disables welcome/userLeave msg
         elif arg.lower() == 'disable':
             update_database('Settings', field_name, False, 'GuildId', ctx.guild.id)
-            await ctx.message.channel.send(f'<a:tick:857439616877199360> {msg_type} Message is disabled')
+            await ctx.message.channel.send(f"😟 {msg} was disabled")
         else:
             await ctx.message.channel.send("Could not understand that")
 
@@ -48,7 +48,7 @@ class Admin(commands.Cog):
     async def welcomeMsg(self, ctx, arg=None):
         if await help_embed(ctx.channel, "welcomeMsg enable/disable", arg):
             return
-        await self.toggle_msgs(ctx, arg, "welcomeMsg", "Welcome")
+        await self.toggle_msgs(ctx, arg, "welcomeMsg", "Welcome message")
 
     @commands.command()
     @has_admin_permissions()
@@ -62,7 +62,7 @@ class Admin(commands.Cog):
     async def userLeaveMsg(self, ctx, arg=None):
         if await help_embed(ctx.channel, "userLeaveMsg enable/disable", arg):
             return
-        await self.toggle_msgs(ctx, arg, "userLeaveMsg", "UserLeave")
+        await self.toggle_msgs(ctx, arg, "userLeaveMsg", "User leave message")
 
    
 
@@ -113,6 +113,15 @@ class Admin(commands.Cog):
             db.commit()
 
         await ctx.send(f"Prefix set to {prefix}")
+
+    @commands.command()
+    @has_admin_permissions()
+    async def levels(self, ctx, value=None):
+        if await help_embed(ctx.channel, "levels enable/disable", value):
+            return 
+
+        await self.toggle_msgs(ctx, value, 'levels', 'Levels feature')
+
 
 # Add bot as an extension
 def setup(bot):
