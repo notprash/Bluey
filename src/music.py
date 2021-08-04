@@ -85,8 +85,11 @@ class Player(wavelink.Player):
 
     async def advance(self):
         next_track = self.queue.get_next_track()
-        if not next_track:
-            return
+        print("adalksjdflaskjdf")
+        print(next_track)
+        if next_track == None:
+            await self.stop()
+            return self.queue.clear
         await self.play(next_track)
 
 
@@ -114,7 +117,9 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
     async def on_node_ready(self, node: wavelink.Node):
         print(f"{node.identifier} is ready")
 
-    @wavelink.WavelinkMixin.listener('on_track_end')
+    wavelink.WavelinkMixin.listener("on_track_stuck")
+    @wavelink.WavelinkMixin.listener("on_track_end")
+    @wavelink.WavelinkMixin.listener("on_track_exception")
     async def on_player_stop(self, node, payload):
         try:
             await payload.player.advance()
@@ -144,7 +149,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
     async def skip(self, ctx):
         player = self.get_player(ctx) 
         previous = player.queue.current_track
-        await player.advance()
+        await player.stop()
         await ctx.send(f"Skipped {previous}")
 
 
@@ -171,7 +176,11 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
     async def queue(self, ctx):
         player = self.get_player(ctx)
         upcoming = player.queue.upcoming
-        current_track = player.queue.current_track
+        try:
+            current_track = player.queue.current_track
+        except QueueIsEmpty:
+            embed = discord.Embed(description="🙄 Queue is empty", color=discord.Color.red())
+            return await ctx.send(embed=embed)
         current_track_title = '%.41s' % current_track + '...'
         description = ''
         for track in upcoming:
