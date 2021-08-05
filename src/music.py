@@ -1,5 +1,7 @@
+from operator import is_not
 from os import read
 import sqlite3
+from discord.channel import VoiceChannel
 from discord.ext import commands
 from youtube_dl import YoutubeDL
 import discord
@@ -53,6 +55,8 @@ class Queue:
 
     
     def previous(self, set=False):
+        if self.position - 2 < 0:
+            raise QueueIsEmpty
         if set:
             self.position -= 2
             return self.__queue[self.position]
@@ -85,8 +89,6 @@ class Player(wavelink.Player):
 
     async def advance(self):
         next_track = self.queue.get_next_track()
-        print("adalksjdflaskjdf")
-        print(next_track)
         if next_track == None:
             await self.stop()
             return self.queue.clear
@@ -117,6 +119,10 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
     async def on_node_ready(self, node: wavelink.Node):
         print(f"{node.identifier} is ready")
 
+    async def create_embed(self, channel: discord.TextChannel, description, color: discord.Colour):
+        embed = discord.Embed(description=description, color=color)
+        await channel.send(embed=embed)
+
     wavelink.WavelinkMixin.listener("on_track_stuck")
     @wavelink.WavelinkMixin.listener("on_track_end")
     @wavelink.WavelinkMixin.listener("on_track_exception")
@@ -136,6 +142,14 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
                                               password='youshallnotpass',
                                               identifier='MAIN',
                                               region='us_central')
+
+    async def in_voice_channel(self, ctx):
+        try:
+            voice_channel = ctx.author.voice.channel
+            return voice_channel
+        except:
+            await ctx.send("<:error:870673057495261184> Connect to a voice channel!")
+            return False
     
     def get_player(self, ctx):
         if isinstance(ctx, commands.Context):
@@ -148,23 +162,29 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
     @commands.command()
     async def skip(self, ctx):
         player = self.get_player(ctx) 
+        channel = await self.in_voice_channel(ctx)
+        if not channel:
+            return 
         previous = player.queue.current_track
         await player.stop()
         await ctx.send(f"Skipped {previous}")
 
+    @skip.error
+    async def skip_error(self, ctx, exc):
+        if isinstance(exc, QueueIsEmpty):
+            return await self.create_embed(ctx.channel, '🙄 Queue is empty', color=discord.Color.red())
+
 
     @commands.command(name='play', description="Plays a song", aliases=['p'])
     async def play(self, ctx, *song_name):
+        channel = await self.in_voice_channel(ctx)
+        if not channel:
+            return 
         if len(song_name) == 0:
             return
         song_name = ' '.join(song_name)
         tracks = await self.wavelink.get_tracks(f'ytsearch: {song_name}')
         player = self.get_player(ctx)
-        try:
-            channel = ctx.author.voice.channel
-        except Exception:
-            await ctx.send("<:error:870673057495261184> Connect to a voice channel!")
-            return
 
         if not player.is_connected:
             await player.connect(channel.id)
@@ -179,8 +199,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
         try:
             current_track = player.queue.current_track
         except QueueIsEmpty:
-            embed = discord.Embed(description="🙄 Queue is empty", color=discord.Color.red())
-            return await ctx.send(embed=embed)
+            return await self.create_embed(ctx.channel, '🙄 Queue is empty', color=discord.Color.red())
         current_track_title = '%.41s' % current_track + '...'
         description = ''
         for track in upcoming:
@@ -199,6 +218,9 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
 
     @commands.command(name='stop', description="Disconnects the bot and clears the queue", aliases=['destroy'])
     async def stop(self, ctx):
+        channel = await self.in_voice_channel(ctx)
+        if not channel:
+            return 
         player = self.get_player(ctx)
         await player.player_disconnect()
         player.queue.clear
@@ -206,6 +228,9 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
     
     @commands.command(name='volume', description='Changes the volume of the player', aliases=['vol'])
     async def volume(self, ctx, value=None): 
+        channel = await self.in_voice_channel(ctx)
+        if not channel:
+            return 
         prefix = read_database(ctx.guild.id)[8]
         try:
             value = int(value)
@@ -224,9 +249,9 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
             return await ctx.send(embed=embed)
 
         if value > 100:
-            return await ctx.send("The volume is too high")
+            return await self.create_embed(ctx.channel, '🙄 Volume is too high', color=discord.Colour.red())
         elif value < 0:
-            return await ctx.send("The volume is too low")
+            return await self.create_embed(ctx.channel, '🙄 Volume is too low', color=discord.Colour.red())
 
 
         await player.set_volume(value)
@@ -234,26 +259,45 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
 
     @commands.command(name='back', description="Moves back to the previous track", aliases=['prev', 'previous'])
     async def back(self, ctx):
+        channel = await self.in_voice_channel(ctx)
+        if not channel:
+            return
         player = self.get_player(ctx)
         song = player.queue.previous(set=True)
         await player.stop()
         await ctx.send(f"◀️  Moving back to **{song}**")
 
+    @back.error
+    async def back_command_error(self, ctx, exc):
+        if isinstance(exc, QueueIsEmpty):
+            return await self.create(ctx.channel, '🙄 Queue is empty', color=discord.Color.red())
+
     @commands.command(name='repeat', description='Replays the current track', aliases=['replay'])
     async def repeat(self, ctx):
+        channel = await self.in_voice_channel(ctx)
+        if not channel:
+            return
         player = self.get_player(ctx)
         song_name = player.queue.previous()
         await player.start_playback()
         await ctx.send(f"🔁 Replaying **{song_name}**")
 
+    @repeat.error
+    async def repeat_error(self, ctx, exc):
+        if isinstance(exc, QueueIsEmpty):
+            return await self.create_embed(ctx.channel, '🙄 Queue is empty', color=discord.Color.red())
+
 
     
     @commands.command(name='pause', description='Pauses the track')
     async def pause(self, ctx):
+        channel = await self.in_voice_channel(ctx)
+        if not channel:
+            return 
         prefix = read_database(ctx.guild.id)[8]
         player = self.get_player(ctx)
         if player.is_paused:
-            return await ctx.send(f"The player is already paused. Try using `{prefix}resume` for resuming the track")
+            return await self.create(ctx.channel, f'The player is already paused. Try using `{prefix}resume` for resuming the track', color=discord.Color.red())
 
         await player.set_pause(True)
         current_track = player.queue.current_track
@@ -261,9 +305,12 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
 
     @commands.command(name='resume', description='Resumes the track', aliases=['unpause'])
     async def resume(self, ctx):
+        channel = await self.in_voice_channel(ctx)
+        if not channel:
+            return 
         player = self.get_player(ctx)
         if not player.is_paused:
-            return await ctx.send("The player is already playing")
+            return await self.create(ctx.channel, 'Player is already playing', color=discord.Color.red())
 
         await player.set_pause(False)
         current_track = player.queue.current_track
@@ -274,6 +321,9 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
     # Likes songs
     @commands.command(name='like', description='Likes the current song', aliases=['fav'])
     async def like(self, ctx):
+        channel = await self.in_voice_channel(ctx)
+        if not channel:
+            return 
         with sqlite3.connect('db.sqlite3') as db:
             try:
                 db.execute("CREATE TABLE Liked (user int, songname TEXT)")
@@ -285,8 +335,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
             current_track = player.queue.current_track.title
             song = db.execute("SELECT songname FROM Liked WHERE user = ? AND songname = ?", (ctx.author.id, current_track)).fetchone()
             if song != None:
-                embed = discord.Embed(description='Song already added to your liked songs', color=discord.Color.red())
-                return await ctx.send(embed=embed)
+                return await self.create(ctx.channel, 'Song already added to your like songs', color=discord.Color.red())
 
             db.execute("INSERT INTO Liked VALUES(?, ?)", (ctx.author.id, current_track))
             db.commit()
@@ -302,10 +351,8 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
             songs = db.execute(f'SELECT songname FROM Liked WHERE user = {member.id}').fetchall()
             description = ""
             if songs == []:
-                embed = discord.Embed(description=f"{member} does not have any liked songs", color=discord.Color.red())
-                return await ctx.send(embed=embed)
+                return await self.create_embed(ctx.channel, f'{member} does not have any liked songs', color=discord.Color.red())
                 
-
             i = 0
 
             for song in songs:
@@ -318,9 +365,35 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
             embed.set_footer(text=ctx.author, icon_url=ctx.author.avatar_url)
             await ctx.send(embed=embed)
 
+    @commands.command(name='unlike', description='Unlikes the songs', aliases=['unfav'])
+    async def unlike(self, ctx):
+        channel = await self.in_voice_channel(ctx)
+        if not channel:
+            return 
+        player = self.get_player(ctx)
+        try:
+            current = player.queue.current_track
+        except QueueIsEmpty:
+            return await self.create_embed(ctx.channel, '🙄 Queue is empty', color=discord.Color.red())
+
+        with sqlite3.connect("db.sqlite3") as db:
+            
+            value = db.execute(f'SELECT * FROM Liked WHERE songname = "{current}" AND user = {ctx.author.id}')
+            value = value.fetchone()
+            if value == None:
+                return await self.create_embed(ctx.channel, '🙄 This song is not added to your liked songs', color=discord.Color.red())
+            db.execute(f'DELETE FROM Liked WHERE songname = "{current}" AND user = {ctx.author.id}')
+            db.commit()
+            await self.create_embed(ctx.channel, f'💔 Removed {current} from your liked songs', color=discord.Color.green())
+        
+        
+        
 
     @commands.command(name='bassboost', description='Increases the bass sound')
     async def bassboost(self, ctx, args=None):
+        channel = await self.in_voice_channel()
+        if not channel:
+            return 
         player = self.get_player(ctx)
         eq = wavelink.Equalizer.boost()
         song = player.queue.current_track

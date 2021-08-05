@@ -48,7 +48,7 @@ async def on_guild_join(guild):
 
     # Create DataBase
     with sqlite3.connect('db.sqlite3') as db:
-        command = "INSERT INTO Settings VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?,)"
+        command = "INSERT INTO Settings VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?,"
         db.execute(command, tuple(guildData.values()))
         db.commit()
 
