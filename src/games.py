@@ -19,20 +19,28 @@ class Games(commands.Cog):
         await ctx.send('Choose a number between 1 to 10')
 
         def check(msg):
-            return msg.author == ctx.author and msg.channel == ctx.channel and int(msg.content) in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+            try:
+                number = int(msg.content)
+            except:
+                return
+            return msg.author == ctx.author and msg.channel == ctx.channel and int(number) in list(range(1, 11))
 
         msg = await self.client.wait_for("message", check=check)
-        i = 3
-        while i >= 1:
-            if int(msg.content) == num:
-                await ctx.send("Kudos! You guessed the number right.")
-                break
+        i = 0
+        while i < 3:
+            try:
+                number = int(msg.content)
+            except:
+                await ctx.send("<:error:870673057495261184> Choose a number between 1 to 10!")
+                continue
+            if number == num:
+                return await ctx.send("<a:wumpuscongrats:857438443441618954> Kudos! You guessed the number right.")
             else:
-                i -= 1
-                await ctx.send(f'Try Again, only {i} attempts left')
+                if i + 1 == 3:
+                    return await ctx.send(f"😕 Sorry! It was {num}")
+                i += 1
+                await ctx.send(f'Try Again, only {3 - i} attempts left')
                 msg = await self.client.wait_for("message", check=check)
-        if i == 1:
-            await ctx.send(f"Sorry! It was {num}")
 
 ### Memory Game
     @commands.command()

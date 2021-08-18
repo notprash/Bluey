@@ -288,7 +288,7 @@ class Levels(commands.Cog):
             await ctx.send(f"Xp blocked {member.mention}")
             return await member.add_roles(role)
 
-        await ctx.send(f"Xp blocked {member.mention}")
+        await ctx.send(f"<:tickmark:867411301277892618> Xp blocked {member.mention}")
         return await member.add_roles(role)
         # member.add_roles(roles=)
 
@@ -345,7 +345,7 @@ class Levels(commands.Cog):
                     level = int(args[0])
                     cursor = db.execute(f"INSERT INTO Levelups VALUES(?, ?, ?)", (ctx.guild.id, role.id, level))
                     db.commit()
-                    await ctx.send(f"User will recieve {role.mention} at level {level}")
+                    await ctx.send(f"<:tickmark:867411301277892618> User will recieve {role.mention} at level {level}")
                 except:
                     await ctx.send("Role already added")
             

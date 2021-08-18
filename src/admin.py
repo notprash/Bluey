@@ -112,7 +112,8 @@ class Admin(commands.Cog):
             db.execute(sql)
             db.commit()
 
-        await ctx.send(f"Prefix set to {prefix}")
+        embed = discord.Embed(description=f'Prefix set to {prefix}', color=discord.Color.green())
+        await ctx.send(embed=embed)
 
     @commands.command()
     @has_admin_permissions()
