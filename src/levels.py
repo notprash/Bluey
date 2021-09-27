@@ -8,20 +8,22 @@ from PIL import Image, ImageDraw, ImageOps, ImageFont
 import os
 from utilities import read_database, update_database, has_admin_permissions, help_embed
 
+
 class Levels(commands.Cog):
     def __init__(self, bot):
         self.client = bot
 
     def enabled(self, guild):
         return bool(read_database(guild)[9])
-    
+
     async def disabled_msg(self, ctx):
-        embed = discord.Embed(description="Levels is disabled. Please enable it to use this", color=discord.Color.red())
+        embed = discord.Embed(
+            description="Levels is disabled. Please enable it to use this", color=discord.Color.red())
         return await ctx.send(embed=embed)
 
     def find_or_insert_user(self, member: discord.Member):
         with sql.connect('db.sqlite3') as cursor:
-            try: 
+            try:
                 command = "CREATE TABLE Levels (Guild int, user int, xp int, level int)"
                 cursor.execute(command)
                 cursor.commit()
@@ -34,34 +36,36 @@ class Levels(commands.Cog):
 
             if result == None:
                 result = (member.guild.id, member.id, 0, 0)
-                cursor.execute("INSERT INTO Levels VALUES(?, ?, ?, ?)", (member.guild.id, member.id, 0, 0))
+                cursor.execute("INSERT INTO Levels VALUES(?, ?, ?, ?)",
+                               (member.guild.id, member.id, 0, 0))
                 cursor.commit()
 
         return result
+
     def check_if_level_up_role(self, level, guildid):
         if level == None:
             return
         with sql.connect('db.sqlite3') as db:
             try:
-                cursor = db.execute(f"SELECT * FROM Levelups WHERE guildId = {guildid}")
+                cursor = db.execute(
+                    f"SELECT * FROM Levelups WHERE guildId = {guildid}")
             except:
                 return False
             values = cursor.fetchone()
             if values == None:
                 return False
             if values[2] == level:
-                return values[1] 
+                return values[1]
 
         return False
 
-
     def check_if_xp_blocked(self, channel: discord.TextChannel, guild):
         with sql.connect("db.sqlite3") as db:
-            values = db.execute(f"SELECT channel FROM Noxp WHERE guildId = {guild.id}").fetchall()
+            values = db.execute(
+                f"SELECT channel FROM Noxp WHERE guildId = {guild.id}").fetchall()
             for value in values:
                 if value[0] == channel.id:
                     return True
-
 
         return False
 
@@ -76,7 +80,7 @@ class Levels(commands.Cog):
     # Create Circular Image
     def create_circular_image(self, image_file, size: tuple):
         mask = Image.new('L', size, 0)
-        drawmask = ImageDraw.Draw(mask) 
+        drawmask = ImageDraw.Draw(mask)
         drawmask.ellipse((0, 0) + size, fill=255)
 
         im = Image.open(image_file).convert("RGBA")
@@ -105,7 +109,6 @@ class Levels(commands.Cog):
 
         return colors
 
-
     def add_corners(self, im, rad):
         circle = Image.new('L', (rad * 2, rad * 2), 0)
         draw = ImageDraw.Draw(circle)
@@ -115,7 +118,8 @@ class Levels(commands.Cog):
         alpha.paste(circle.crop((0, 0, rad, rad)), (0, 0))
         alpha.paste(circle.crop((0, rad, rad, rad * 2)), (0, h - rad))
         alpha.paste(circle.crop((rad, 0, rad * 2, rad)), (w - rad, 0))
-        alpha.paste(circle.crop((rad, rad, rad * 2, rad * 2)), (w - rad, h - rad))
+        alpha.paste(circle.crop((rad, rad, rad * 2, rad * 2)),
+                    (w - rad, h - rad))
         im.putalpha(alpha)
         return im
 
@@ -132,35 +136,38 @@ class Levels(commands.Cog):
         bar_x2 = 400
         bar_y2 = 270
         circle_size = bar_y2 - bar_y1
-        draw.ellipse((bar_x1 - circle_size//2, bar_y1, bar_x1 + circle_size//2, bar_y1 + circle_size), fill="#9b9e9c")
+        draw.ellipse((bar_x1 - circle_size//2, bar_y1, bar_x1 +
+                     circle_size//2, bar_y1 + circle_size), fill="#9b9e9c")
 
-        draw.ellipse((bar_x2 - circle_size//2, bar_y1, bar_x2 + circle_size//2, bar_y2), fill="#9b9e9c")
+        draw.ellipse((bar_x2 - circle_size//2, bar_y1, bar_x2 +
+                     circle_size//2, bar_y2), fill="#9b9e9c")
         draw.rectangle([bar_x1, bar_y1, bar_x2, bar_y2], fill="#9b9e9c")
 
-
         percent = round((xp/final_xp) * 100)
-        size_progress_bar = int((bar_x2 - bar_x1)  * percent/100)  
+        size_progress_bar = int((bar_x2 - bar_x1) * percent/100)
         bar_x2 = bar_x1 + size_progress_bar
-        draw.ellipse((bar_x1 - circle_size//2, bar_y1, bar_x1 + circle_size//2, bar_y1 + circle_size), fill="#00a8f3")
+        draw.ellipse((bar_x1 - circle_size//2, bar_y1, bar_x1 +
+                     circle_size//2, bar_y1 + circle_size), fill="#00a8f3")
 
-        draw.ellipse((bar_x2 - circle_size//2, bar_y1, bar_x2 + circle_size//2, bar_y2), fill="#00a8f3")
+        draw.ellipse((bar_x2 - circle_size//2, bar_y1, bar_x2 +
+                     circle_size//2, bar_y2), fill="#00a8f3")
         draw.rectangle([bar_x1, bar_y1, bar_x2, bar_y2], fill='#00a8f3')
-
-
 
         self.create_circular_image('avatar.jpg', (177, 176))
         img = Image.open('output.png').convert('RGBA')
         colors = self.get_colors('output.png')
         background.paste(img, (15, 75), img)
 
-        font2 = ImageFont.truetype('Font.ttf', 32)
-        font3 = ImageFont.truetype('Font.ttf', 40)
-        font4 = ImageFont.truetype("Font.ttf", 25)
+        font2 = ImageFont.truetype('fonts/Font.ttf', 32)
+        font3 = ImageFont.truetype('fonts/Font.ttf', 40)
+        font4 = ImageFont.truetype("fonts/Font.ttf", 25)
 
-        draw.text((218, 90), f"LEVEL\n\n {level}", font=font2, fill=(255, 255, 255))
-        draw.text((347, 91), f"RANK\n\n# {rank}", font=font2, fill=(255, 255, 255))
-        draw.text((228, 246), f"{xp}/{final_xp}", font=font4, fill=(255, 255, 255))
-
+        draw.text((218, 90), f"LEVEL\n\n {level}",
+                  font=font2, fill=(255, 255, 255))
+        draw.text((347, 91), f"RANK\n\n# {rank}",
+                  font=font2, fill=(255, 255, 255))
+        draw.text((228, 246), f"{xp}/{final_xp}",
+                  font=font4, fill=(255, 255, 255))
 
         W, H = 593, 316
         w, h = draw.textsize(name, font=font3)
@@ -172,18 +179,15 @@ class Levels(commands.Cog):
         draw.rectangle((468, 118, 489, 121), fill='#48ebfa')
         background.paste(img, (489, 79), img)
 
-
         half = Image.new("RGBA", (593, 7), colors[2])
         background.paste(half, (0, H - 7))
-
 
         # save image
         round_corners = self.add_corners(background, 30)
         round_corners.save("rank.png")
 
-
     @commands.command()
-    async def rank(self, ctx, member : discord.Member=None):
+    async def rank(self, ctx, member: discord.Member = None):
         if not self.enabled(ctx.guild.id):
             return await self.disabled_msg(ctx)
         member = member or ctx.author
@@ -191,7 +195,8 @@ class Levels(commands.Cog):
         await member.guild.icon_url.save('1.jpg')
         with sql.connect('db.sqlite3') as db:
             guild_id, user_id, xp, level = self.find_or_insert_user(member)
-            rank = db.execute(f"Select Count(*) from Levels where xp > ? and Guild=?", (xp, guild_id))
+            rank = db.execute(
+                f"Select Count(*) from Levels where xp > ? and Guild=?", (xp, guild_id))
             rank = rank.fetchone()[0] + 1
             final_xp = self.calculate_xp(level + 1)
             name = f"{member.name}#{member.discriminator}"
@@ -199,23 +204,24 @@ class Levels(commands.Cog):
 
         file = discord.File("rank.png")
         await ctx.send(file=file)
-        
+
         # remove files
         os.remove('output.png')
         os.remove('1.jpg')
         os.remove('avatar.jpg')
         os.remove('rank.png')
-       
 
     @commands.command()
     async def top(self, ctx):
         if not self.enabled(ctx.guild.id):
             return await self.disabled_msg(ctx)
         with sql.connect("db.sqlite3") as db:
-            cursor = db.execute(f'SELECT user, xp, level FROM Levels WHERE Guild = {ctx.guild.id} ORDER BY xp DESC ')
+            cursor = db.execute(
+                f'SELECT user, xp, level FROM Levels WHERE Guild = {ctx.guild.id} ORDER BY xp DESC ')
             data = cursor.fetchall()
             i = 0
-            embed = discord.Embed().set_author(name="Leaderboard", icon_url=self.client.user.avatar_url)
+            embed = discord.Embed().set_author(name="Leaderboard",
+                                               icon_url=self.client.user.avatar_url)
             embed.set_thumbnail(url=ctx.guild.icon_url)
             for row in data:
                 userid, xp, level = row
@@ -235,7 +241,7 @@ class Levels(commands.Cog):
 
     @commands.command()
     @commands.has_permissions(administrator=True)
-    async def setlvl(self, ctx, member: discord.Member=None, lvl: int=None):
+    async def setlvl(self, ctx, member: discord.Member = None, lvl: int = None):
         if not self.enabled(ctx.guild.id):
             return await self.disabled_msg(ctx)
         if member == None or lvl == None:
@@ -243,41 +249,40 @@ class Levels(commands.Cog):
         if await help_embed(ctx.channel, "setlvl <@member> <lvl>", arg):
             return
         guildid, userid, xp, level = self.find_or_insert_user(member)
-        
+
         xp = self.calculate_xp(lvl)
         level = lvl
         with sql.connect("db.sqlite3") as db:
-            db.execute(f'Update Levels set xp = {xp}, level = {level} WHERE Guild = {guildid} and user = {userid}')
+            db.execute(
+                f'Update Levels set xp = {xp}, level = {level} WHERE Guild = {guildid} and user = {userid}')
             db.commit()
 
-
         color = discord.Color.green()
-        embed = discord.Embed(description=f"Level set {level} for {member.mention}", color=color)
+        embed = discord.Embed(
+            description=f"Level set {level} for {member.mention}", color=color)
         await ctx.send(embed=embed)
-
-
-
 
     @commands.command()
     @commands.has_permissions(administrator=True)
-    async def levelup(self, ctx, type=None, channel: discord.TextChannel=None):
+    async def levelup(self, ctx, type=None, channel: discord.TextChannel = None):
         if not self.enabled(ctx.guild.id):
             return await self.disabled_msg(ctx)
         if await help_embed(ctx.channel, "levelup channel <#channel>\n>levelup default", type):
             return
         if type == 'channel':
-            update_database("Settings", 'levelup', channel.id, 'guildId', ctx.guild.id)
-            embed = discord.Embed(description=f"Now {channel.mention} will recieve level up notifications", color=discord.Color.green())
+            update_database("Settings", 'levelup', channel.id,
+                            'guildId', ctx.guild.id)
+            embed = discord.Embed(
+                description=f"Now {channel.mention} will recieve level up notifications", color=discord.Color.green())
             await ctx.send(embed=embed)
 
         elif type == "default":
             update_database("Settings", 'levelup', 0, 'guildId', ctx.guild.id)
             await ctx.send("✅ Restored defaults")
 
-
     @commands.command()
     @commands.has_permissions(kick_members=True, ban_members=True)
-    async def xpblock(self, ctx, member: discord.Member=None):
+    async def xpblock(self, ctx, member: discord.Member = None):
         if not self.enabled(ctx.guild.id):
             return await self.disabled_msg(ctx)
         if await help_embed(ctx.channel, "xpblock <@member>", member):
@@ -294,7 +299,7 @@ class Levels(commands.Cog):
 
     @commands.command()
     @has_admin_permissions()
-    async def noxpchannel(self, ctx, type=None, channel: discord.TextChannel=None):
+    async def noxpchannel(self, ctx, type=None, channel: discord.TextChannel = None):
         if not self.enabled(ctx.guild.id):
             return await self.disabled_msg(ctx)
         arg = 0
@@ -304,14 +309,16 @@ class Levels(commands.Cog):
             return
         with sql.connect("db.sqlite3") as db:
             try:
-                db.execute("CREATE TABLE Noxp (guildId int, channel int PRIMARY KEY)")
+                db.execute(
+                    "CREATE TABLE Noxp (guildId int, channel int PRIMARY KEY)")
                 db.commit()
             except:
                 pass
 
             if type == 'add':
                 try:
-                    db.execute("INSERT INTO Noxp VALUES(?, ?)", (ctx.guild.id, channel.id))
+                    db.execute("INSERT INTO Noxp VALUES(?, ?)",
+                               (ctx.guild.id, channel.id))
                     db.commit()
                     await ctx.send(f"✅ {channel.mention} is now xp blocked channel")
                 except:
@@ -319,12 +326,12 @@ class Levels(commands.Cog):
 
             elif type == 'remove':
                 try:
-                    db.execute(f"DELETE FROM Noxp WHERE guildId = {ctx.guild.id} AND channel = {channel.id}")
+                    db.execute(
+                        f"DELETE FROM Noxp WHERE guildId = {ctx.guild.id} AND channel = {channel.id}")
                     db.commit()
                     await ctx.send(f"✅ {channel.mention} is not xp blocked anymore")
                 except:
                     await ctx.send(f"🔴 {channel.mention} channel is not added")
-
 
     @commands.command()
     @has_admin_permissions()
@@ -335,7 +342,8 @@ class Levels(commands.Cog):
             return
         with sql.connect('db.sqlite3') as db:
             try:
-                db.execute("CREATE TABLE Levelups (guildId int, roleId int PRIMARY KEY, level int)")
+                db.execute(
+                    "CREATE TABLE Levelups (guildId int, roleId int PRIMARY KEY, level int)")
             except:
                 print("Table Exists")
 
@@ -343,23 +351,26 @@ class Levels(commands.Cog):
                 try:
                     role = ctx.guild.get_role(int(args[1][3:-1]))
                     level = int(args[0])
-                    cursor = db.execute(f"INSERT INTO Levelups VALUES(?, ?, ?)", (ctx.guild.id, role.id, level))
+                    cursor = db.execute(
+                        f"INSERT INTO Levelups VALUES(?, ?, ?)", (ctx.guild.id, role.id, level))
                     db.commit()
                     await ctx.send(f"<:tickmark:867411301277892618> User will recieve {role.mention} at level {level}")
                 except:
                     await ctx.send("Role already added")
-            
+
             elif type == 'remove' and args != []:
                 role = ctx.guild.get_role(int(args[0][3:-1]))
-                try: 
-                    db.execute("DELETE FROM Levelups WHERE guildId = ? AND roleId = ?", (ctx.guild.id, role.id))
+                try:
+                    db.execute(
+                        "DELETE FROM Levelups WHERE guildId = ? AND roleId = ?", (ctx.guild.id, role.id))
                     db.commit()
                     await ctx.send("✅ Role removed")
                 except:
                     await ctx.send('🔴 Role does not exist')
-            
+
             elif type == 'list':
-                values = db.execute(f"SELECT roleId, level FROM Levelups WHERE guildId = {ctx.guild.id}").fetchall()
+                values = db.execute(
+                    f"SELECT roleId, level FROM Levelups WHERE guildId = {ctx.guild.id}").fetchall()
                 description = ""
                 for value in values:
                     roleid, level = value
@@ -367,28 +378,29 @@ class Levels(commands.Cog):
                     description += f"**{level}** -- {role.mention} \n\n"
 
                 embed = discord.Embed(description=description)
-                embed.set_author(name="Levelup Roles", icon_url=ctx.guild.icon_url)
+                embed.set_author(name="Levelup Roles",
+                                 icon_url=ctx.guild.icon_url)
                 await ctx.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_message(self, message):
         if not self.enabled(message.guild.id):
-            return 
+            return
         role = discord.utils.get(message.guild.roles, name='[xp blocked]')
         if message.author.bot or role in message.author.roles:
             return
 
         if self.check_if_xp_blocked(message.channel, message.guild):
             return
-        
+
         prefix = read_database(message.guild.id)[8]
         if message.content.startswith(prefix):
             return
 
         result = self.find_or_insert_user(message.author)
-        
+
         guildid, userid, xp, level = result
-        
+
         # Value 0 == No level up channel
         levelup_channel = read_database(message.guild.id)[6]
 
@@ -413,11 +425,11 @@ class Levels(commands.Cog):
                 await message.author.add_roles(role)
             await channel.send(f"Congrats {message.author.mention}, You have reached level {level} <a:wumpuscongrats:857438443441618954>")
 
-
-
         with sql.connect('db.sqlite3') as db:
-            db.execute(f'Update Levels set xp = {xp}, level = {level} WHERE Guild = {guildid} and user = {userid}')
+            db.execute(
+                f'Update Levels set xp = {xp}, level = {level} WHERE Guild = {guildid} and user = {userid}')
             db.commit()
+
 
 def setup(bot):
     bot.add_cog(Levels(bot))

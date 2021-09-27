@@ -14,7 +14,7 @@ class Help(commands.Cog):
             cog_name = cog_name.capitalize()
         cogs_names = self.client.cogs.keys()
         cog_dict = {}
-        cog_emojis = {"Admin": "🔒", "Levels": '🥳', "Moderation": '🕵️', 'Music': '💿', 'Animal': '💿', 'Fun': '👀', "Games": '🎲'}
+        cog_emojis = {"Admin": "🔒", "Levels": '🥳', "Moderation": '🕵️', 'Animal': '💿', 'Fun': '👀', "Games": '🎲'}
         prefix = read_database(ctx.guild.id)[8]
         for cogs in cogs_names:
             commands = []
@@ -30,15 +30,12 @@ class Help(commands.Cog):
             embed.add_field(name="🔒Admin", value=f"`{prefix}help Admin`")
             embed.add_field(name="🥳 Levels", value=f"`{prefix}help Levels`")
             embed.add_field(name="🕵️ Moderation", value=f"`{prefix}help Moderation`")
-            embed.add_field(name="💿 Music", value=f"`{prefix}help Music`")
             embed.add_field(name="🐶 Animal", value=f"`{prefix}help Animal`")
             embed.add_field(name="👀 Fun", value=f"`{prefix}help Fun`")
             embed.add_field(name="🎲 Games", value=f"`{prefix}help Games`")
             embed.add_field(name="Milestones", value=f"`{prefix}help Milestones`")
             embed.add_field(name="Anime", value=f"`{prefix}help Anime`")
             
-            # links = "[Invite](https://discord.com/api/oauth2/authorize?client_id=823908962428387338&permissions=8&scope=bot%20applications.commands)"
-            # embed.add_field(name="Links", value=links, inline=False)
 
             components = [Button(style=ButtonStyle.URL, label="Invite", url='https://discord.com/api/oauth2/authorize?client_id=823908962428387338&permissions=8&scope=bot%20applications.commands')]
             await ctx.send(embed=embed, components=components)

@@ -4,4 +4,3 @@ db.sqlite3
 src/__pycache__
 Pipfile
 Pipfile.lock
-musicqueue/

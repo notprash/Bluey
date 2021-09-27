@@ -8,15 +8,18 @@ import sqlite3
 import os
 from discord_components import DiscordComponents
 
+
 def get_prefix(client, msg):
     # get prefix
     prefix = read_database(msg.guild.id)[8]
 
     return prefix
 
+
 intents = discord.Intents.all()
 
-client = commands.Bot(command_prefix=get_prefix, intents=intents, help_command=None)
+client = commands.Bot(command_prefix=get_prefix,
+                      intents=intents, help_command=None)
 slash = SlashCommand(client, sync_commands=True)
 
 
@@ -40,11 +43,10 @@ async def on_guild_join(guild):
             db.commit()
         except Exception:
             print("Table Exists")
-        
 
     # Creates Basic Data Structure
     guildData = {"GuildId": guild.id, "welcomeChannel": guild.text_channels[0].id,
-            "userLeaveChannel": guild.text_channels[0].id, "welcomeMsg": False, "userLeaveMsg": False, "warncount": 6, "levelup": 0, 'milestone': 0, 'prefix': "!", 'levels': True}
+                 "userLeaveChannel": guild.text_channels[0].id, "welcomeMsg": False, "userLeaveMsg": False, "warncount": 6, "levelup": 0, 'milestone': 0, 'prefix': "!", 'levels': True}
 
     # Create DataBase
     with sqlite3.connect('db.sqlite3') as db:
@@ -56,11 +58,12 @@ async def on_guild_join(guild):
 @client.event
 async def on_guild_remove(guild):
 
-    # Deletes server data from the bot when the bot removed from the server 
-    with sqlite3.connect("db.sqlite3") as db: 
-        command = f"DELETE FROM Settings WHERE GuildId = {guild.id}" 
+    # Deletes server data from the bot when the bot removed from the server
+    with sqlite3.connect("db.sqlite3") as db:
+        command = f"DELETE FROM Settings WHERE GuildId = {guild.id}"
         db.execute(command)
         db.commit()
+
 
 def get_colors(image_file, numcolors=10, resize=150):
     # Resize image to speed up processing
@@ -95,11 +98,10 @@ async def on_member_join(member):
 
         await member.avatar_url.save("avatar.png")
 
-
         W, H = (593, 316)
         size = (216, 192)
         mask = Image.new('L', size, 0)
-        draw = ImageDraw.Draw(mask) 
+        draw = ImageDraw.Draw(mask)
         draw.ellipse((0, 0) + size, fill=255)
 
         im = Image.open('avatar.png').convert("RGBA")
@@ -111,11 +113,10 @@ async def on_member_join(member):
         im = Image.open("output.png").convert("RGBA")
         colors = get_colors("output.png")
 
-
         background = Image.new("RGBA", (W, H), '#535353')
         background.paste(im, (200, 30), im)
 
-        font = ImageFont.truetype('Roboto.ttf', 24)
+        font = ImageFont.truetype('fonts/Roboto.ttf', 24)
         draw = ImageDraw.Draw(background)
         half = Image.new("RGBA", (593, 10), colors[0])
         background.paste(half, (0, 306))
@@ -136,7 +137,7 @@ async def on_member_join(member):
         # Remove the files
         os.remove('foo.png')
         os.remove('output.png')
-        os.remove('avatar.png')        
+        os.remove('avatar.png')
 
 
 @client.event
@@ -152,7 +153,6 @@ async def on_member_remove(member):
 
 
 client.load_extension('admin')
-client.load_extension('music')
 client.load_extension('moderation')
 client.load_extension('fun')
 client.load_extension("levels")
