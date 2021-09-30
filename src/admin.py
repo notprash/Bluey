@@ -15,12 +15,12 @@ class Admin(commands.Cog):
     async def toggle_msgs(self, ctx, arg, field_name, msg):
         # Enable welcome/userLeave msg
         if arg.lower() == 'enable':
-            update_database('Settings', field_name, True, 'GuildId', ctx.guild.id)
+            update_database('Settings', field_name, 1, 'GuildId', ctx.guild.id)
             await ctx.send(f"🥳 {msg} was enabled")
 
         # Disables welcome/userLeave msg
         elif arg.lower() == 'disable':
-            update_database('Settings', field_name, False, 'GuildId', ctx.guild.id)
+            update_database('Settings', field_name, 0, 'GuildId', ctx.guild.id)
             await ctx.message.channel.send(f"😟 {msg} was disabled")
         else:
             await ctx.message.channel.send("Could not understand that")
