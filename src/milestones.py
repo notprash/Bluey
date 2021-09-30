@@ -43,7 +43,8 @@ class Milestones(commands.Cog):
     @commands.command()
     @has_admin_permissions()
     async def milestone(self, ctx, keyword=None, value=None, *value2):
-        if await help_embed(ctx.channel, "milestone add <member_count> \n milestone remove <member_count>\n milestone channel <#channel>\n milestone list", keyword):
+        prefix = read_database(ctx.guild.id)[8]
+        if await help_embed(ctx.channel, f"milestone add <member_count> \n{prefix}milestone remove <member_count>\n{prefix}milestone channel <#channel>\n{prefix}milestone list", keyword):
             return
         with sqlite3.connect("db.sqlite3") as db:
             try:

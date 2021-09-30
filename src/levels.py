@@ -245,6 +245,7 @@ class Levels(commands.Cog):
     @commands.command()
     @commands.has_permissions(administrator=True)
     async def setlvl(self, ctx, member: discord.Member = None, lvl: int = None):
+        arg = 0;
         if not self.enabled(ctx.guild.id):
             return await self.disabled_msg(ctx)
         if member == None or lvl == None:
@@ -268,9 +269,10 @@ class Levels(commands.Cog):
     @commands.command()
     @commands.has_permissions(administrator=True)
     async def levelup(self, ctx, type=None, channel: discord.TextChannel = None):
+        prefix = read_database(ctx.guild.id)[8]
         if not self.enabled(ctx.guild.id):
             return await self.disabled_msg(ctx)
-        if await help_embed(ctx.channel, "levelup channel <#channel>\n>levelup default", type):
+        if await help_embed(ctx.channel, f"levelup channel <#channel>\n{prefix}levelup default", type):
             return
         if type == 'channel':
             update_database("Settings", 'levelup', channel.id,
@@ -303,12 +305,13 @@ class Levels(commands.Cog):
     @commands.command()
     @has_admin_permissions()
     async def noxpchannel(self, ctx, type=None, channel: discord.TextChannel = None):
+        prefix = read_database(ctx.guild.id)[8]
         if not self.enabled(ctx.guild.id):
             return await self.disabled_msg(ctx)
         arg = 0
         if type == None or channel == None:
             arg = None
-        if await help_embed(ctx.channel, "noxpchannel add <#channel>\n>noxpchannel remove <#channel>", arg):
+        if await help_embed(ctx.channel, f"noxpchannel add <#channel>\n{prefix}noxpchannel remove <#channel>", arg):
             return
         with sql.connect("db.sqlite3") as db:
             try:
@@ -339,9 +342,11 @@ class Levels(commands.Cog):
     @commands.command()
     @has_admin_permissions()
     async def giverole(self, ctx, type=None, *args):
+        # get prefix
+        prefix = read_database(ctx.guild.id)[8]
         if not self.enabled(ctx.guild.id):
             return await self.disabled_msg(ctx)
-        if await help_embed(ctx.channel, "giverole add <lvl> <@role>\n>giverole remove <@role>\n>giverole list", type):
+        if await help_embed(ctx.channel, f"giverole add <lvl> <@role>\n{prefix}giverole remove <@role>\n{prefix}giverole list", type):
             return
         with sql.connect('db.sqlite3') as db:
             try:

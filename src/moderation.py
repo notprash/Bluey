@@ -149,7 +149,7 @@ class Moderation(commands.Cog):
             result = db.execute(command)
             count = result.fetchone()[0]
             if count <= 0:
-                return await ctx.send(f"{member.mention} has not warnings yet")
+                return await ctx.send(f"{member.mention} does not have any warnings yet 😕")
             count = count - warncount
             if count < 0:
                 count = 0
