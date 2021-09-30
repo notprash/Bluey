@@ -61,8 +61,11 @@ class Levels(commands.Cog):
 
     def check_if_xp_blocked(self, channel: discord.TextChannel, guild):
         with sql.connect("db.sqlite3") as db:
-            values = db.execute(
-                f"SELECT channel FROM Noxp WHERE guildId = {guild.id}").fetchall()
+            try: 
+                values = db.execute(
+                    f"SELECT channel FROM Noxp WHERE guildId = {guild.id}").fetchall()
+            except:
+                return False
             for value in values:
                 if value[0] == channel.id:
                     return True
